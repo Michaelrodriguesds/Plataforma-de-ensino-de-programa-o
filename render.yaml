@@ -1,0 +1,14 @@
+# Configuração automática para o Render (opção "Blueprint")
+services:
+  - type: web
+    name: codequest
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/saude
+    envVars:
+      - key: MONGODB_URI
+        sync: false          # você cola a URI do Atlas no painel do Render
+      - key: JWT_SECRET
+        generateValue: true  # o Render gera uma chave secreta sozinho
+      - key: FUSO_HORARIO
+        value: America/Sao_Paulo

@@ -1,0 +1,36 @@
+// Junta o código do aluno com o código de teste do exercício.
+// Python/JS: o teste vai no final.
+// Java: o aluno escreve só métodos ou classes, e nós criamos a classe
+// Main com o método main() contendo o teste.
+// Devolve { codigo, deslocamento } — deslocamento = quantas linhas
+// foram colocadas ANTES do código do aluno (para corrigir o nº da linha do erro).
+(function (raiz) {
+  function montarCodigo(ling, codigoAluno, teste) {
+    if (!teste) return { codigo: codigoAluno, deslocamento: 0 };
+    // JavaScript: o teste roda dentro de { } para as variáveis dele não colidirem com as do aluno
+    if (ling === 'javascript') return { codigo: codigoAluno + '\n{\n' + teste + '\n}', deslocamento: 0 };
+    if (ling !== 'java') return { codigo: codigoAluno + '\n' + teste, deslocamento: 0 };
+
+    var imports = [];
+    var corpo = codigoAluno.split('\n').map(function (l) {
+      if (/^\s*import\s+[\w.*]+\s*;\s*$/.test(l)) { imports.push(l.trim()); return ''; }
+      return l;
+    }).join('\n');
+    var topo = ['import java.util.*;', 'import java.util.function.*;', 'import java.util.stream.*;'].concat(imports);
+    var mainTeste = '  public static void main(String[] args) throws Exception {\n' + teste + '\n  }';
+    if (/\b(class|interface|enum|record)\s+\w+/.test(codigoAluno)) {
+      // modo classes: classes do aluno + classe Main de teste
+      return {
+        codigo: topo.join('\n') + '\n' + corpo + '\n\npublic class Main {\n' + mainTeste + '\n}\n',
+        deslocamento: topo.length
+      };
+    }
+    // modo métodos: os métodos do aluno ficam dentro da classe Main
+    return {
+      codigo: topo.join('\n') + '\npublic class Main {\n' + corpo + '\n\n' + mainTeste + '\n}\n',
+      deslocamento: topo.length + 1
+    };
+  }
+  raiz.cqMontarCodigo = montarCodigo;
+  if (typeof module !== 'undefined' && module.exports) module.exports = { montarCodigo: montarCodigo };
+})(typeof self !== 'undefined' ? self : globalThis);

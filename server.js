@@ -1,0 +1,316 @@
+// =============================================================
+// server.js — o "balcão de atendimento" do CodeQuest.
+//
+// O navegador (celular/notebook) faz pedidos para cá:
+//   "quero me cadastrar", "terminei a fase X", "me mostra o ranking"...
+// e o servidor responde. Ele também entrega:
+//   /            site público (aulas abertas, bom para o Google e o AdSense)
+//   /app         o aplicativo de exercícios (precisa de conta)
+//   /api/...     os pedidos do aplicativo
+// =============================================================
+require('dotenv').config();
+const express = require('express');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+
+const { criarStore } = require('./src/store');
+const jogo = require('./src/jogo');
+const { rodarJava, temJava } = require('./src/javaRunner');
+const { criarPaginas } = require('./src/paginas');
+const { montarPainel } = require('./src/painel');
+
+const PORTA = process.env.PORT || 3000;
+
+// Chave secreta que "assina" o crachá (token) de cada jogador.
+// Se você não definir JWT_SECRET no .env, criamos uma e guardamos em data/.segredo
+function obterSegredo() {
+  if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
+  const arq = path.join(__dirname, 'data', '.segredo');
+  fs.mkdirSync(path.dirname(arq), { recursive: true });
+  if (!fs.existsSync(arq)) fs.writeFileSync(arq, crypto.randomBytes(48).toString('hex'));
+  if (process.env.NODE_ENV === 'production') console.warn('⚠️  Defina JWT_SECRET nas variáveis de ambiente em produção!');
+  return fs.readFileSync(arq, 'utf8').trim();
+}
+const SEGREDO = obterSegredo();
+
+// ---------- Configurações de anúncios, estatísticas e contato (.env) ----------
+const ADSENSE_CLIENTE = (process.env.ADSENSE_CLIENTE || '').trim();      // ex: ca-pub-1234567890123456
+const ADSENSE_SLOT = (process.env.ADSENSE_SLOT || '').trim();            // ex: 1234567890
+const GA_ID = (process.env.GA_ID || '').trim();                          // ex: G-XXXXXXX (opcional)
+const ANUNCIOS_DEMO = process.env.ANUNCIOS_DEMO === '1';                 // mostra caixas no lugar dos anúncios
+const ADMINS = (process.env.ADMIN_USUARIOS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+const config = {
+  contato: (process.env.CONTATO_EMAIL || '').trim(),
+  verificacaoGoogle: (process.env.GOOGLE_VERIFICACAO || '').trim(), // código do Search Console
+  ga: GA_ID,
+  dataPolitica: process.env.DATA_POLITICA || '21/10/2026',
+  siteUrl: req => (process.env.SITE_URL || `${req.protocol}://${req.get('host')}`).replace(/\/$/, ''),
+  publico: semAnuncio => ({
+    adsense: ADSENSE_CLIENTE && !semAnuncio ? { cliente: ADSENSE_CLIENTE, slot: ADSENSE_SLOT } : null,
+    demo: ANUNCIOS_DEMO && !semAnuncio, ga: GA_ID || null,
+    contato: (process.env.CONTATO_EMAIL || '').trim() || null
+  }),
+  scriptConfig: semAnuncio => `<script>window.CQ_CONFIG=${JSON.stringify(config.publico(semAnuncio)).replace(/</g, '\\u003c')};</script>`
+};
+
+const store = criarStore();
+const { fases: FASES, cursos: CURSOS } = jogo.carregarCursos();
+const paginas = criarPaginas({ cursos: CURSOS, config });
+console.log(`📚 ${FASES.size} fases carregadas`);
+
+const app = express();
+app.set('trust proxy', 1); // necessário no Render/Railway (eles ficam na frente do app)
+app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
+app.use(express.json({ limit: '100kb' }));
+
+// ---------- Limites contra abuso ----------
+const limiteLogin = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, message: { erro: 'Muitas tentativas. Espere alguns minutos.' } });
+const limiteJava = rateLimit({ windowMs: 60 * 1000, limit: 20, message: { erro: 'Calma! Muitas execuções seguidas. Espere um minutinho.' } });
+const limiteFeedback = rateLimit({ windowMs: 60 * 1000, limit: 10, message: { erro: 'Muitos avisos seguidos. Obrigado! Espere um pouco.' } });
+const limiteEvento = rateLimit({ windowMs: 60 * 1000, limit: 120, message: { erro: 'Muitos eventos.' } });
+
+// ---------- "Porteiro": confere o crachá (token) ----------
+function lerToken(req) {
+  const h = req.headers.authorization || '';
+  if (!h.startsWith('Bearer ')) return null;
+  try { return jwt.verify(h.slice(7), SEGREDO).id; } catch { return null; }
+}
+function exigirLogin(req, res, next) {
+  const id = lerToken(req);
+  if (!id) return res.status(401).json({ erro: 'Faça login para continuar.' });
+  req.usuarioId = id;
+  next();
+}
+const ehAdmin = u => !!u && ADMINS.includes(u.usuario);
+async function exigirAdmin(req, res, next) {
+  const u = await store.buscarPorId(req.usuarioId);
+  if (!ehAdmin(u)) return res.status(403).json({ erro: 'Área só para o administrador.' });
+  next();
+}
+const pub = u => ({ ...jogo.usuarioPublico(u), admin: ehAdmin(u) });
+
+// Filtro simples de nomes ofensivos (o nome aparece no ranking público).
+// Acrescente palavras se precisar. A comparação ignora acentos e maiúsculas.
+const PALAVRAS_PROIBIDAS = ['porra', 'caralho', 'buceta', 'putaria', 'filhadaputa', 'viado', 'cuzao', 'merda', 'fdp', 'vagabund', 'arrombad', 'piroca', 'nazista', 'hitler', 'admin', 'codequest'];
+const semAcento = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const nomeProibido = t => PALAVRAS_PROIBIDAS.some(p => semAcento(t).includes(p));
+const criarToken = u => jwt.sign({ id: u._id }, SEGREDO, { expiresIn: '60d' });
+const ok = fn => (req, res, next) => fn(req, res, next).catch(e => { console.error(e); res.status(500).json({ erro: 'Erro no servidor. Tente de novo.' }); });
+// estatística nunca pode derrubar o pedido principal
+const anotar = dados => store.registrarAtividade({ dia: jogo.hojeStr(), ...dados }).catch(e => console.error('estatística:', e.message));
+
+// ---------- Cadastro e login ----------
+app.post('/api/auth/cadastro', limiteLogin, ok(async (req, res) => {
+  let { usuario, nome, senha, avatar } = req.body || {};
+  usuario = String(usuario || '').trim().toLowerCase();
+  nome = String(nome || '').trim().slice(0, 30);
+  if (!/^[a-z0-9_.]{3,20}$/.test(usuario)) return res.status(400).json({ erro: 'Usuário: 3 a 20 letras, números, ponto ou _ (sem espaço e sem acento).' });
+  if (nome.length < 2) return res.status(400).json({ erro: 'Digite seu nome (pelo menos 2 letras).' });
+  if (String(senha || '').length < 6) return res.status(400).json({ erro: 'A senha precisa ter pelo menos 6 caracteres.' });
+  if (nomeProibido(usuario) || nomeProibido(nome)) return res.status(400).json({ erro: 'Escolha outro nome: ele aparece no ranking para todo mundo.' });
+  if (await store.buscarPorUsuario(usuario)) return res.status(409).json({ erro: 'Esse usuário já existe. Escolha outro.' });
+  const senhaHash = await bcrypt.hash(senha, 10);
+  const u = await store.criar(jogo.novoUsuario({ usuario, nome, senhaHash, avatar: String(avatar || '🦊').slice(0, 8) }));
+  anotar({ uid: u._id, tipo: 'cadastro' });
+  res.json({ token: criarToken(u), usuario: pub(u) });
+}));
+
+app.post('/api/auth/login', limiteLogin, ok(async (req, res) => {
+  const usuario = String((req.body || {}).usuario || '').trim().toLowerCase();
+  const u = await store.buscarPorUsuario(usuario);
+  if (!u || !(await bcrypt.compare(String(req.body.senha || ''), u.senhaHash))) {
+    return res.status(401).json({ erro: 'Usuário ou senha incorretos.' });
+  }
+  res.json({ token: criarToken(u), usuario: pub(u) });
+}));
+
+// ---------- Dados do jogador ----------
+app.get('/api/eu', exigirLogin, ok(async (req, res) => {
+  const u = await store.buscarPorId(req.usuarioId);
+  if (!u) return res.status(401).json({ erro: 'Conta não encontrada.' });
+  res.json({ usuario: pub(u) });
+}));
+
+app.patch('/api/eu', exigirLogin, ok(async (req, res) => {
+  const u = await store.buscarPorId(req.usuarioId);
+  const { nome, avatar, metaDiaria } = req.body || {};
+  if (nome && nomeProibido(nome)) return res.status(400).json({ erro: 'Escolha outro nome: ele aparece no ranking para todo mundo.' });
+  if (nome && String(nome).trim().length >= 2) u.nome = String(nome).trim().slice(0, 30);
+  if (avatar) u.avatar = String(avatar).slice(0, 8);
+  if ([10, 20, 30, 50, 80].includes(Number(metaDiaria))) u.metaDiaria = Number(metaDiaria);
+  await store.salvar(u);
+  res.json({ usuario: pub(u) });
+}));
+
+// Excluir a própria conta (direito previsto na LGPD). Pede a senha para confirmar.
+app.post('/api/eu/excluir', exigirLogin, limiteLogin, ok(async (req, res) => {
+  const u = await store.buscarPorId(req.usuarioId);
+  if (!u || !(await bcrypt.compare(String((req.body || {}).senha || ''), u.senhaHash))) {
+    return res.status(401).json({ erro: 'Senha incorreta.' });
+  }
+  await store.excluir(u._id);
+  res.json({ ok: true });
+}));
+
+app.get('/api/meta', (req, res) => {
+  res.json({ conquistas: jogo.CONQUISTAS, java: temJava(), hoje: jogo.hojeStr() });
+});
+
+// ---------- Progresso ----------
+app.post('/api/progresso/fase', exigirLogin, ok(async (req, res) => {
+  const u = await store.buscarPorId(req.usuarioId);
+  const { faseId, erros, dicas, solucoes } = req.body || {};
+  const r = jogo.concluirFase(u, FASES, String(faseId), {
+    erros: Number(erros) || 0, dicas: Number(dicas) || 0, solucoes: Number(solucoes) || 0
+  });
+  if (r.erro) return res.status(400).json(r);
+  await store.salvar(u);
+  anotar({ uid: u._id, tipo: 'fase', curso: FASES.get(String(faseId)).curso });
+  res.json({ ...r, usuario: pub(u) });
+}));
+
+app.post('/api/progresso/revisao', exigirLogin, ok(async (req, res) => {
+  const u = await store.buscarPorId(req.usuarioId);
+  const r = jogo.registrarRevisao(u, FASES, (req.body || {}).resultados);
+  await store.salvar(u);
+  anotar({ uid: u._id, tipo: 'revisao' });
+  res.json({ ...r, usuario: pub(u) });
+}));
+
+// ---------- Ranking ----------
+app.get('/api/ranking', exigirLogin, ok(async (req, res) => {
+  const semanal = req.query.periodo !== 'geral';
+  const sk = jogo.semanaKey();
+  const lista = await store.ranking({ semanaKey: semanal ? sk : null, limite: 50 });
+  const eu = await store.buscarPorId(req.usuarioId);
+  res.json({
+    periodo: semanal ? 'semana' : 'geral',
+    lista: lista.map((u, i) => ({
+      posicao: i + 1, nome: u.nome, usuario: u.usuario, avatar: u.avatar,
+      xp: semanal ? u.semana.xp : u.xp, nivel: jogo.nivelDoXp(u.xp).nivel, eu: u._id === eu._id
+    }))
+  });
+}));
+
+// ---------- Executar Java ----------
+app.post('/api/executar/java', exigirLogin, limiteJava, ok(async (req, res) => {
+  const { codigo, entrada, deslocamento } = req.body || {};
+  res.json(await rodarJava(String(codigo || ''), String(entrada || '').slice(0, 5000), deslocamento));
+}));
+
+// ---------- Estatísticas de visita ----------
+// Cada tela aberta manda: { vid: código aleatório do aparelho, pagina: 'app/inicio' }
+const ROBO = /bot|crawl|spider|slurp|mediapartners|lighthouse|headless|preview|facebookexternalhit|whatsapp/i;
+app.post('/api/evento', limiteEvento, ok(async (req, res) => {
+  if (ROBO.test(req.get('user-agent') || '')) return res.status(204).end(); // robôs não contam
+  const { vid, pagina } = req.body || {};
+  if (!/^[\w-]{8,64}$/.test(String(vid || ''))) return res.status(400).json({ erro: 'vid inválido' });
+  await store.registrarVisita({ dia: jogo.hojeStr(), vid: String(vid), uid: lerToken(req), pagina: String(pagina || '') });
+  res.status(204).end();
+}));
+
+// ---------- Painel do administrador ----------
+app.get('/api/admin/painel', exigirLogin, ok(exigirAdmin), ok(async (req, res) => {
+  res.json(await montarPainel(store, CURSOS));
+}));
+
+// ---------- Avisos de problema nas aulas ("Reportar problema") ----------
+app.post('/api/feedback', exigirLogin, limiteFeedback, ok(async (req, res) => {
+  const { faseId, passo, texto } = req.body || {};
+  const t = String(texto || '').trim().slice(0, 1000);
+  if (t.length < 3) return res.status(400).json({ erro: 'Escreva o que aconteceu.' });
+  const u = await store.buscarPorId(req.usuarioId);
+  await store.salvarFeedback({ faseId: String(faseId || '').slice(0, 30), passo: String(passo || '').slice(0, 30), texto: t, usuario: u ? u.usuario : '?', em: new Date().toISOString() });
+  res.json({ ok: true });
+}));
+
+// ---------- Ferramentas do administrador ----------
+app.get('/api/admin/feedback', exigirLogin, ok(exigirAdmin), ok(async (req, res) => {
+  res.json({ lista: await store.listarFeedback(100) });
+}));
+app.delete('/api/admin/feedback/:id', exigirLogin, ok(exigirAdmin), ok(async (req, res) => {
+  await store.excluirFeedback(req.params.id);
+  res.json({ ok: true });
+}));
+// Redefinir senha de quem esqueceu (o site não manda e-mail): gera uma senha provisória
+app.post('/api/admin/usuarios/:usuario/senha', exigirLogin, ok(exigirAdmin), ok(async (req, res) => {
+  const u = await store.buscarPorUsuario(String(req.params.usuario).toLowerCase());
+  if (!u) return res.status(404).json({ erro: 'Usuário não encontrado.' });
+  const provisoria = crypto.randomBytes(12).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 8) || 'troque123';
+  u.senhaHash = await bcrypt.hash(provisoria, 10);
+  await store.salvar(u);
+  res.json({ ok: true, usuario: u.usuario, senha: provisoria });
+}));
+// Remover usuário (ex: nome ofensivo no ranking)
+app.delete('/api/admin/usuarios/:usuario', exigirLogin, ok(exigirAdmin), ok(async (req, res) => {
+  const u = await store.buscarPorUsuario(String(req.params.usuario).toLowerCase());
+  if (!u) return res.status(404).json({ erro: 'Usuário não encontrado.' });
+  if (u._id === req.usuarioId) return res.status(400).json({ erro: 'Você não pode remover a própria conta por aqui.' });
+  await store.excluir(u._id);
+  res.json({ ok: true });
+}));
+// Backup: baixa todos os usuários e o progresso num arquivo JSON
+app.get('/api/admin/backup', exigirLogin, ok(exigirAdmin), ok(async (req, res) => {
+  const usuarios = await store.todosUsuarios();
+  const nome = `codequest-backup-${jogo.hojeStr()}.json`;
+  res.setHeader('Content-Disposition', `attachment; filename="${nome}"`);
+  res.json({ versao: 1, geradoEm: new Date().toISOString(), total: usuarios.length, usuarios });
+}));
+
+app.get('/api/saude', (req, res) => res.json({ ok: true, fases: FASES.size, java: temJava() }));
+
+// ---------- Arquivos especiais para o Google ----------
+app.get('/ads.txt', (req, res) => {
+  if (!ADSENSE_CLIENTE) return res.status(404).type('text/plain').send('# Defina ADSENSE_CLIENTE no .env\n');
+  // Linha padrão do AdSense: google.com, pub-SEU_ID, DIRECT, f08c47fec0942fa0
+  res.type('text/plain').send(`google.com, ${ADSENSE_CLIENTE.replace(/^ca-/, '')}, DIRECT, f08c47fec0942fa0\n`);
+});
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain').send(`User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ${config.siteUrl(req)}/sitemap.xml\n`);
+});
+app.get('/sitemap.xml', (req, res) => res.type('application/xml').send(paginas.sitemap(req)));
+
+// ---------- Site público ----------
+const html = (res, conteudo) => conteudo ? res.type('html').send(conteudo) : res.status(404).type('html').send(paginas.naoEncontrada(res.req));
+app.get('/', (req, res) => html(res, paginas.inicio(req)));
+app.get('/aprender', (req, res) => html(res, paginas.aprender(req)));
+app.get('/aprender/:curso', (req, res) => html(res, paginas.trilha(req, req.params.curso)));
+app.get('/aprender/:curso/:fase', (req, res) => html(res, paginas.licao(req, req.params.curso, req.params.fase)));
+app.get('/sobre', (req, res) => html(res, paginas.sobre(req)));
+app.get('/privacidade', (req, res) => html(res, paginas.privacidade(req)));
+app.get('/termos', (req, res) => html(res, paginas.termos(req)));
+
+// ---------- Aplicativo (/app) ----------
+// Entregamos o index.html com as configurações de anúncio já embutidas
+const indexApp = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+app.get(['/app', '/app/'], (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache');
+  res.type('html').send(indexApp.replace('</head>', config.scriptConfig(false) + '\n</head>'));
+});
+
+app.use(express.static(path.join(__dirname, 'public'), {
+  index: false,
+  setHeaders: (res, p) => { if (p.endsWith('sw.js')) res.setHeader('Cache-Control', 'no-cache'); }
+}));
+app.use('/api', (req, res) => res.status(404).json({ erro: 'Rota não encontrada.' }));
+app.use((req, res) => res.status(404).type('html').send(paginas.naoEncontrada(req)));
+
+store.conectar().then(() => {
+  app.listen(PORTA, () => {
+    console.log(`\n🎮 CodeQuest rodando!`);
+    console.log(`   Site público: http://localhost:${PORTA}`);
+    console.log(`   Aplicativo:   http://localhost:${PORTA}/app`);
+    console.log(`☕ Java no servidor: ${temJava() ? 'disponível' : 'NÃO encontrado (exercícios de Java não vão rodar)'}`);
+    console.log(`💰 Anúncios: ${ADSENSE_CLIENTE ? 'AdSense ' + ADSENSE_CLIENTE : ANUNCIOS_DEMO ? 'modo demonstração' : 'desligados (defina ADSENSE_CLIENTE)'}`);
+    console.log(`📊 Painel do dono: ${ADMINS.length ? ADMINS.join(', ') + ' → /app#/admin' : 'defina ADMIN_USUARIOS no .env'}\n`);
+  });
+}).catch(e => {
+  console.error('❌ Não consegui conectar no banco de dados:', e.message);
+  console.error('   Confira a MONGODB_URI no arquivo .env (ou apague a linha para usar o arquivo local).');
+  process.exit(1);
+});
