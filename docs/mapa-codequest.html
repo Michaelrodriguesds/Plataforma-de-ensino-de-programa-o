@@ -1,0 +1,546 @@
+<title>Mapa do CodeQuest</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Baloo+2:wght@600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: uma coluna de leitura (até 860px), abas no topo; a jornada é uma trilha vertical de estrelas,
+   como o mapa de fases do próprio CodeQuest. Visual escuro primeiro (céu noturno), com versão clara. */
+:root {
+  --ceu: #17153B;          /* fundo */
+  --painel: #211E55;       /* cartões */
+  --painel2: #2D2970;      /* destaque suave */
+  --linha: #433D96;        /* bordas */
+  --texto: #EFEDFF;
+  --texto2: #B8B3E3;
+  --estrela: #FFD447;      /* acento: "você está aqui" */
+  --estrela-texto: #FFD447;
+  --sobre-estrela: #1B1846;
+  --certo: #3DDC97;
+  --espera: #FF9F43;
+  --erro: #FF7A8E;
+  --codigo-fundo: #0F0D2B;
+  --f-titulo: 'Baloo 2', 'Trebuchet MS', system-ui, sans-serif;
+  --f-texto: 'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-codigo: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --ceu: #F5F4FC; --painel: #FFFFFF; --painel2: #ECEAFA; --linha: #D3CFF0;
+    --texto: #1B1846; --texto2: #4E4A82; --estrela: #FFD447; --estrela-texto: #8A5D00; --sobre-estrela: #1B1846;
+    --certo: #0F8A5A; --espera: #B4560A; --erro: #C2334D; --codigo-fundo: #1E1B4B;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --ceu: #F5F4FC; --painel: #FFFFFF; --painel2: #ECEAFA; --linha: #D3CFF0;
+  --texto: #1B1846; --texto2: #4E4A82; --estrela: #FFD447; --estrela-texto: #8A5D00; --sobre-estrela: #1B1846;
+  --certo: #0F8A5A; --espera: #B4560A; --erro: #C2334D; --codigo-fundo: #1E1B4B;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--ceu); color: var(--texto); font: 17px/1.55 var(--f-texto);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ceu); }
+h1, h2, h3 { font-family: var(--f-titulo); line-height: 1.15; text-wrap: balance; margin: 0; }
+a { color: var(--estrela-texto); }
+code { font-family: var(--f-codigo); font-size: .88em; background: var(--painel2); padding: .05em .35em; border-radius: 5px; overflow-wrap: anywhere; }
+:focus-visible { outline: 3px solid var(--estrela); outline-offset: 2px; border-radius: 6px; }
+.envolve { max-width: 860px; margin: 0 auto; padding-block: 20px 64px; }
+
+/* ---------- cabeçalho ---------- */
+.cab { display: grid; gap: 6px; padding-block: 8px 4px; }
+.marca { font-family: var(--f-titulo); font-weight: 800; font-size: 1.05rem; color: var(--texto2); }
+.marca b { color: var(--estrela-texto); }
+.cab h1 { font-size: clamp(1.9rem, 6vw, 2.6rem); font-weight: 800; }
+.cab p { margin: 0; color: var(--texto2); max-width: 62ch; }
+.abas { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; display: flex; gap: 6px; padding-block: 10px; background: var(--ceu); margin-top: 10px; overflow-x: auto; }
+.aba { font: 700 .95rem var(--f-titulo); border: 1px solid var(--linha); background: var(--painel); color: var(--texto2); padding: .45em .75em; border-radius: 99px; cursor: pointer; white-space: nowrap; }
+.aba[aria-selected="true"] { background: var(--estrela); color: var(--sobre-estrela); border-color: var(--estrela); }
+.vista { padding-top: 12px; }
+
+/* ---------- resumo ---------- */
+.resumo { display: grid; grid-template-columns: 1fr; gap: 14px; background: var(--painel); border: 1px solid var(--linha); border-radius: 16px; padding: 18px; }
+@media (min-width: 640px) { .resumo { grid-template-columns: 1.4fr 1fr; align-items: center; } }
+.resumo .rotulo { font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; color: var(--texto2); font-weight: 700; }
+.resumo h2 { font-size: 1.6rem; margin-top: 2px; }
+.resumo p { margin: 6px 0 0; color: var(--texto2); }
+.barra { height: 12px; border-radius: 6px; background: var(--painel2); overflow: hidden; }
+.barra i { display: block; height: 100%; width: 0; background: var(--certo); border-radius: 6px; transition: width .4s ease; }
+.contagem { font-variant-numeric: tabular-nums; color: var(--texto2); font-size: .92rem; margin-top: 6px; }
+.btn { font: 700 1rem var(--f-titulo); border: 0; border-radius: 10px; padding: .55em 1.1em; cursor: pointer; background: var(--estrela); color: var(--sobre-estrela); }
+.btn-sec { background: var(--painel2); color: var(--texto); }
+
+/* ---------- trilha (onde estamos) ---------- */
+.legenda { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 18px 0 6px; font-size: .88rem; color: var(--texto2); }
+.legenda span { display: inline-flex; align-items: center; gap: 6px; }
+.legenda i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+.trilha { list-style: none; margin: 8px 0 0; padding: 0; position: relative; }
+.trilha::before { content: ""; position: absolute; left: 21px; top: 22px; bottom: 22px; border-left: 3px dotted var(--linha); }
+.parada { position: relative; display: grid; grid-template-columns: 44px 1fr; gap: 14px; padding-block: 8px; }
+.ponto { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font: 800 1.05rem var(--f-titulo); background: var(--painel); border: 3px solid var(--linha); color: var(--texto2); position: relative; z-index: 1; font-variant-numeric: tabular-nums; }
+.parada.feito .ponto { background: var(--certo); border-color: var(--certo); color: var(--sobre-estrela); }
+.parada.agora .ponto { background: var(--estrela); border-color: var(--estrela); color: var(--sobre-estrela); box-shadow: 0 0 0 6px color-mix(in srgb, var(--estrela) 28%, transparent); }
+.parada.espera .ponto { border-color: var(--espera); color: var(--espera); }
+.parada-corpo { background: var(--painel); border: 1px solid var(--linha); border-radius: 14px; padding: 12px 14px; min-width: 0; cursor: pointer; text-align: left; font: inherit; color: inherit; width: 100%; }
+.parada.agora .parada-corpo { border-color: var(--estrela); }
+.parada-topo { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.parada h3 { font-size: 1.2rem; }
+.chip { font-size: .76rem; font-weight: 700; padding: .15em .6em; border-radius: 99px; border: 1px solid currentColor; white-space: nowrap; }
+.chip.feito { color: var(--certo); }
+.chip.agora { color: var(--estrela-texto); }
+.chip.espera { color: var(--espera); }
+.chip.depois { color: var(--texto2); }
+.parada-desc { margin: 4px 0 0; color: var(--texto2); font-size: .95rem; }
+.parada-meta { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .84rem; color: var(--texto2); font-variant-numeric: tabular-nums; }
+.parada .mini { height: 6px; border-radius: 3px; background: var(--painel2); margin-top: 8px; overflow: hidden; }
+.parada .mini i { display: block; height: 100%; background: var(--certo); }
+
+/* ---------- passo a passo ---------- */
+.indice { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.indice button { font: 700 .9rem var(--f-titulo); border: 1px solid var(--linha); background: var(--painel); color: var(--texto2); padding: .3em .8em; border-radius: 99px; cursor: pointer; font-variant-numeric: tabular-nums; }
+.indice button.ok { color: var(--certo); border-color: var(--certo); }
+.indice button.ativo { background: var(--estrela); color: var(--sobre-estrela); border-color: var(--estrela); }
+.etapa { background: var(--painel); border: 1px solid var(--linha); border-radius: 16px; padding: 18px; display: grid; gap: 14px; }
+.etapa-cab { display: grid; gap: 4px; }
+.etapa-cab .rotulo { font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; color: var(--texto2); font-weight: 700; }
+.etapa-cab h2 { font-size: 1.7rem; }
+.etapa-cab p { margin: 0; color: var(--texto2); max-width: 65ch; }
+.fatos { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .88rem; color: var(--texto2); }
+.fatos b { color: var(--texto); }
+.passos { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; counter-reset: passo; }
+.passo { display: grid; grid-template-columns: 30px 1fr; gap: 12px; background: var(--ceu); border: 1px solid var(--linha); border-radius: 12px; padding: 12px; }
+.passo.feito { border-color: color-mix(in srgb, var(--certo) 60%, var(--linha)); }
+.passo input[type=checkbox] { width: 24px; height: 24px; margin: 2px 0 0; accent-color: var(--certo); cursor: pointer; }
+.passo-corpo { min-width: 0; display: grid; gap: 8px; }
+.passo-titulo { font-weight: 700; }
+.passo.feito .passo-titulo { color: var(--texto2); text-decoration: line-through; text-decoration-thickness: 1px; }
+.passo-como { margin: 0; padding-left: 1.2em; color: var(--texto2); font-size: .95rem; }
+.passo-como li { margin-bottom: 3px; }
+.cmd { display: flex; align-items: stretch; border-radius: 10px; overflow: hidden; background: var(--codigo-fundo); border: 1px solid var(--linha); }
+.cmd pre { margin: 0; padding: 10px 12px; flex: 1; min-width: 0; overflow-x: auto; color: #EFEDFF; font: 14px/1.5 var(--f-codigo); white-space: pre; }
+.cmd button { flex: none; border: 0; border-left: 1px solid var(--linha); background: #2D2970; color: #EFEDFF; font: 700 .85rem var(--f-titulo); padding: 0 12px; cursor: pointer; min-width: 74px; }
+.ok-msg { font-size: .9rem; color: var(--certo); }
+.ok-msg::before { content: "Deu certo se: "; font-weight: 700; }
+.problemas { border-top: 1px dashed var(--linha); padding-top: 10px; }
+.problemas summary { cursor: pointer; font-weight: 700; color: var(--erro); }
+.problemas dl { margin: 8px 0 0; display: grid; gap: 8px; }
+.problemas dt { font-weight: 700; }
+.problemas dd { margin: 0; color: var(--texto2); }
+.nav-etapa { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.aviso { background: var(--painel2); border-radius: 12px; padding: 10px 14px; font-size: .95rem; }
+.aviso b { color: var(--estrela-texto); }
+
+/* ---------- fluxogramas ---------- */
+.fluxos { display: grid; gap: 22px; }
+.diagrama { background: var(--painel); border: 1px solid var(--linha); border-radius: 16px; padding: 18px; display: grid; gap: 12px; }
+.diagrama > h2 { font-size: 1.45rem; }
+.diagrama > p { margin: 0; color: var(--texto2); max-width: 65ch; }
+.fluxo { display: grid; gap: 0; justify-items: stretch; }
+.no { background: var(--ceu); border: 2px solid var(--linha); border-radius: 12px; padding: 10px 14px; min-width: 0; }
+.no b { display: block; font-family: var(--f-titulo); font-size: 1.05rem; }
+.no span { display: block; font-size: .9rem; color: var(--texto2); }
+.no.quente { border-color: var(--estrela); }
+.no.bom { border-color: var(--certo); }
+.no.ruim { border-color: var(--erro); }
+.no.google { border-color: var(--espera); }
+.seta { display: grid; justify-items: center; color: var(--texto2); font-size: .82rem; padding-block: 4px; text-align: center; }
+.seta::before { content: ""; width: 2px; height: 14px; background: var(--linha); }
+.seta::after { content: ""; width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 9px solid var(--linha); }
+.seta em { font-style: normal; padding: 2px 0; }
+.ramos { display: grid; gap: 10px; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .ramos.r2 { grid-template-columns: 1fr 1fr; } .ramos.r3 { grid-template-columns: repeat(3, 1fr); } }
+.camada { border: 2px dashed var(--linha); border-radius: 14px; padding: 12px; display: grid; gap: 10px; }
+.camada > .titulo-camada { font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; color: var(--texto2); font-weight: 700; }
+.analogia { font-size: .92rem; color: var(--texto2); border-left: 3px solid var(--estrela); padding-left: 10px; }
+.ciclo-volta { text-align: center; font-size: .88rem; color: var(--estrela-texto); font-weight: 700; padding-top: 6px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="envolve">
+  <header class="cab">
+    <div class="marca">Code<b>Quest</b> · versão 1.2.0</div>
+    <h1>Mapa do CodeQuest</h1>
+    <p>Onde você está, o que falta fazer e como tudo funciona. Marque as tarefas conforme for fazendo: o mapa avança sozinho (fica salvo neste navegador).</p>
+  </header>
+  <nav class="abas" role="tablist" aria-label="Seções">
+    <button class="aba" role="tab" id="aba-mapa" data-vista="mapa" aria-controls="vista-mapa">Onde estamos</button>
+    <button class="aba" role="tab" id="aba-passos" data-vista="passos" aria-controls="vista-passos">Passo a passo</button>
+    <button class="aba" role="tab" id="aba-fluxos" data-vista="fluxos" aria-controls="vista-fluxos">Como funciona</button>
+  </nav>
+
+  <section class="vista" id="vista-mapa" role="tabpanel" aria-labelledby="aba-mapa"></section>
+  <section class="vista" id="vista-passos" role="tabpanel" aria-labelledby="aba-passos" hidden></section>
+  <section class="vista" id="vista-fluxos" role="tabpanel" aria-labelledby="aba-fluxos" hidden>
+    <div class="fluxos">
+
+      <article class="diagrama">
+        <h2>1. As peças do sistema</h2>
+        <p>Quem usa, onde o site mora e quem ajuda de fora. As setas mostram quem conversa com quem.</p>
+        <div class="analogia">Pense num restaurante: a vitrine (aulas abertas) atrai quem passa na rua, o salão (app) atende quem entrou, a cozinha (servidor) prepara tudo e a despensa (banco de dados) guarda os pedidos de cada cliente.</div>
+        <div class="fluxo">
+          <div class="camada">
+            <div class="titulo-camada">Quem chega</div>
+            <div class="ramos r2">
+              <div class="no"><b>Aluno no celular ou PC</b><span>Abre o site pelo navegador ou pelo ícone na tela inicial</span></div>
+              <div class="no google"><b>Robô do Google</b><span>Lê as aulas abertas para mostrar na busca e para o AdSense revisar</span></div>
+            </div>
+          </div>
+          <div class="seta"><em>seudominio.com.br (https)</em></div>
+          <div class="camada">
+            <div class="titulo-camada">Servidor no Render (Node + Express)</div>
+            <div class="ramos r3">
+              <div class="no"><b>Site público</b><span><code>/</code> e <code>/aprender</code>: aulas abertas, sem login, com anúncios</span></div>
+              <div class="no quente"><b>App de exercícios</b><span><code>/app</code>: fases, revisão, ranking, perfil, painel</span></div>
+              <div class="no"><b>API</b><span><code>/api</code>: cadastro, XP, ranking, estatísticas, rodar Java</span></div>
+            </div>
+          </div>
+          <div class="seta"><em>guarda e busca dados</em></div>
+          <div class="ramos r3">
+            <div class="no bom"><b>MongoDB Atlas</b><span>Contas, progresso, estatísticas, avisos de problema</span></div>
+            <div class="no google"><b>Google AdSense</b><span>Coloca os anúncios e paga por mês</span></div>
+            <div class="no"><b>jsDelivr (Python)</b><span>Entrega o Python que roda dentro do navegador do aluno</span></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="diagrama">
+        <h2>2. A jornada do aluno</h2>
+        <p>Do Google até virar hábito. Cada volta do ciclo gera visualizações, e cada visualização pode mostrar um anúncio.</p>
+        <div class="fluxo">
+          <div class="no google"><b>Pesquisa no Google</b><span>"aula de python classes e objetos"</span></div>
+          <div class="seta"></div>
+          <div class="no"><b>Lê a aula aberta</b><span><code>/aprender/python/py-17</code> · primeiro anúncio</span></div>
+          <div class="seta"><em>"Praticar esta fase grátis"</em></div>
+          <div class="no"><b>Cria a conta</b><span>Volta direto para a fase que tinha aberto</span></div>
+          <div class="seta"></div>
+          <div class="camada">
+            <div class="titulo-camada">Dentro de uma fase</div>
+            <div class="ramos r3">
+              <div class="no"><b>Lê a lição</b><span>e roda o exemplo</span></div>
+              <div class="no"><b>Prevê, completa, monta</b><span>errou? a pergunta volta no fim</span></div>
+              <div class="no quente"><b>Escreve o código</b><span>dicas aos poucos, solução se travar</span></div>
+            </div>
+          </div>
+          <div class="seta"></div>
+          <div class="no bom"><b>Ganha estrelas e XP</b><span>Ofensiva sobe · tela de fim de fase com anúncio</span></div>
+          <div class="seta"><em>no dia seguinte</em></div>
+          <div class="ramos r2">
+            <div class="no"><b>Revisão do dia</b><span>As perguntas voltam em 1, 3, 7, 14, 30 e 60 dias</span></div>
+            <div class="no"><b>Ranking da semana</b><span>Zera toda segunda: todo mundo tem chance</span></div>
+          </div>
+          <div class="ciclo-volta">↺ volta para a próxima fase: é esse hábito que mantém o site vivo</div>
+        </div>
+      </article>
+
+      <article class="diagrama">
+        <h2>3. O que acontece ao clicar em "Verificar"</h2>
+        <p>O código do aluno roda de verdade. Cada linguagem roda num lugar diferente, mas o resultado é comparado do mesmo jeito.</p>
+        <div class="fluxo">
+          <div class="no"><b>Código do aluno + código de teste</b><span>O teste é juntado ao que o aluno escreveu</span></div>
+          <div class="seta"><em>depende da linguagem</em></div>
+          <div class="ramos r3">
+            <div class="no"><b>JavaScript</b><span>Roda numa "sala separada" do navegador (Web Worker). Laço infinito? A sala fecha em 6 s.</span></div>
+            <div class="no"><b>Python</b><span>Python de verdade dentro do navegador (Pyodide). A 1ª vez baixa ~10 MB.</span></div>
+            <div class="no"><b>Java</b><span>Vai para o servidor: compila, roda por até 5 s com bloqueios de segurança e apaga tudo.</span></div>
+          </div>
+          <div class="seta"><em>a saída é comparada com a esperada</em></div>
+          <div class="ramos r2">
+            <div class="no bom"><b>Igual</b><span>"Mandou bem!" · o servidor calcula XP e estrelas (ninguém trapaceia no ranking)</span></div>
+            <div class="no ruim"><b>Diferente ou erro</b><span>Mostra a linha diferente, traduz o erro para português e libera as dicas</span></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="diagrama">
+        <h2>4. Como o dinheiro chega</h2>
+        <p>O AdSense paga pelas visualizações e cliques nos anúncios, uma vez por mês, quando o saldo passa do limite.</p>
+        <div class="fluxo">
+          <div class="no"><b>Visitas e alunos voltando</b><span>Painel do dono mostra visitantes, ativos e quem estudou</span></div>
+          <div class="seta"></div>
+          <div class="no"><b>Páginas com anúncio</b><span>Aulas, início, fim de fase, revisão, ranking, trilha · nunca dentro dos exercícios</span></div>
+          <div class="seta"><em>ganho ≈ visualizações ÷ 1.000 × RPM</em></div>
+          <div class="no google"><b>Saldo no AdSense</b><span>Fecha no início de cada mês</span></div>
+          <div class="seta"><em>uma vez só</em></div>
+          <div class="ramos r2">
+            <div class="no google"><b>Verificar identidade</b><span>Documentos, quando o saldo chega ao limite de verificação</span></div>
+            <div class="no google"><b>PIN pelo correio</b><span>Carta em ~3 semanas · 4 meses de prazo · 3 erros suspendem</span></div>
+          </div>
+          <div class="seta"><em>todo mês, se passou do limite de pagamento</em></div>
+          <div class="no bom"><b>Transferência para a sua conta</b><span>Banco ou serviço de câmbio no seu nome · declare como renda</span></div>
+        </div>
+      </article>
+
+      <article class="diagrama">
+        <h2>5. Como fazer uma atualização</h2>
+        <p>O caminho de qualquer melhoria, do seu VS Code até o site no ar.</p>
+        <div class="fluxo">
+          <div class="no"><b>Editar no VS Code</b><span>Ex: uma fase em <code>public/js/conteudo/python.js</code></span></div>
+          <div class="seta"></div>
+          <div class="no"><b>Testar as respostas</b><span><code>npm run validar</code> e <code>npm run curriculo</code></span></div>
+          <div class="seta"></div>
+          <div class="no"><b>Testar no PC</b><span><code>npm start</code> → http://localhost:3000</span></div>
+          <div class="seta"></div>
+          <div class="no"><b>Registrar</b><span>Uma linha no <code>CHANGELOG.md</code>; mexeu em <code>public</code>? suba a <code>VERSAO</code> do <code>sw.js</code></span></div>
+          <div class="seta"></div>
+          <div class="no quente"><b>GitHub Desktop: Commit → Push</b><span>Escreva um resumo do que mudou</span></div>
+          <div class="seta"><em>automático</em></div>
+          <div class="no bom"><b>Render publica sozinho</b><span>Em alguns minutos a novidade está no ar</span></div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  // ======== Dados: etapas, passos, comandos ========
+  var ETAPAS = [
+    { id: 'e0', titulo: 'Construir a plataforma', quem: 'Claude', tempo: 'feito', desc: '103 fases, 409 exercícios, site público, anúncios, painel e documentação (versão 1.2.0).', fixo: true,
+      passos: [
+        { t: 'App de exercícios com JavaScript, Python e Java', como: ['Fases, revisão espaçada, ranking, ofensiva e conquistas'] },
+        { t: 'Site público com as aulas abertas e anúncios nos lugares permitidos', como: ['Privacidade, termos, ads.txt e sitemap prontos'] },
+        { t: 'Painel do dono com estatísticas e ferramentas', como: ['Visitantes, ativos, funil, avisos de problema, senha provisória e backup'] },
+        { t: 'Documentação e histórico no Git', como: ['LEIA-ME, guia de implantação, arquitetura, decisões, roteiro e CHANGELOG'] }
+      ] },
+    { id: 'e1', titulo: 'Preparar o seu PC', quem: 'você', tempo: '15 a 30 min', desc: 'Conferir Node e Python, avisar o Windows onde está o Java do Android Studio e instalar o GitHub Desktop.',
+      passos: [
+        { t: 'Abrir o terminal do VS Code', como: ['Abra o VS Code', 'Menu Terminal → Novo Terminal (abre um PowerShell embaixo)'] },
+        { t: 'Conferir as versões do Node e do Python', cmd: 'node -v\npython --version', ok: 'o Node mostrar v18 ou maior (ex: v22.11.0) e o Python mostrar 3.x.' },
+        { t: 'Ver se o Java já funciona', cmd: 'javac -version', ok: 'aparecer algo como javac 21.0.x. Se aparecer, pule o próximo passo.' },
+        { t: 'Se o Java não foi reconhecido: usar o Java que vem com o Android Studio', como: [
+            'Abra a pasta C:\\Program Files\\Android\\Android Studio\\jbr\\bin e confira se existe o arquivo javac.exe',
+            'Tecla Windows → digite "variáveis de ambiente" → abra "Editar as variáveis de ambiente do sistema"',
+            'Botão Variáveis de Ambiente… → em "Variáveis de usuário", selecione Path → Editar → Novo',
+            'Cole o caminho da pasta jbr\\bin e clique OK três vezes',
+            'Feche e abra o VS Code de novo e rode javac -version'],
+          cmd: 'C:\\Program Files\\Android\\Android Studio\\jbr\\bin', ok: 'javac -version mostrar a versão. Sem a pasta jbr? Instale o JDK 21 em adoptium.net marcando "Add to PATH".' },
+        { t: 'Instalar o GitHub Desktop (já traz o Git)', como: ['Baixe em desktop.github.com, instale e entre com sua conta do GitHub (crie uma se não tiver)'] }
+      ],
+      erros: [
+        { p: '"node" não é reconhecido', s: 'O Node foi instalado depois que o VS Code abriu. Feche todo o VS Code e abra de novo.' },
+        { p: 'Node v16 ou menor', s: 'Instale a versão LTS em nodejs.org (a instalação nova substitui a antiga).' },
+        { p: 'javac continua não reconhecido', s: 'Confira se colou o caminho até jbr\\bin (com o \\bin no final) e se reabriu o VS Code. Em último caso, reinicie o PC.' }
+      ] },
+    { id: 'e2', titulo: 'Rodar o CodeQuest no PC', quem: 'você', tempo: '20 min', desc: 'Instalar as bibliotecas, configurar o .env, criar sua conta de dono e testar tudo.',
+      passos: [
+        { t: 'Descompactar o projeto', como: ['Crie a pasta C:\\projetos', 'Botão direito no codequest.zip → Extrair tudo… → escolha C:\\projetos', 'Vai ficar C:\\projetos\\codequest'] },
+        { t: 'Abrir a pasta no VS Code', como: ['Arquivo → Abrir Pasta… → C:\\projetos\\codequest', 'Se perguntar se confia nos autores, clique em Sim'] },
+        { t: 'Instalar as bibliotecas', como: ['Terminal → Novo Terminal, e rode:'], cmd: 'npm install', ok: 'terminar com "added ... packages" e criar a pasta node_modules.' },
+        { t: 'Criar o arquivo de configuração', cmd: 'copy .env.example .env', ok: 'aparecer o arquivo .env na lista de arquivos do VS Code.' },
+        { t: 'Preencher o .env', como: ['Clique no .env para abrir e preencha estas linhas (troque pelos seus dados):', 'Salve com Ctrl + S'],
+          cmd: 'ADMIN_USUARIOS=michael\nCONTATO_EMAIL=seu-email@gmail.com\nANUNCIOS_DEMO=1', ok: 'o arquivo salvo, sem o ponto branco na aba do VS Code.' },
+        { t: 'Ligar o servidor', cmd: 'npm start', ok: 'aparecer "CodeQuest rodando!", "Java no servidor: disponível" e "Painel do dono: michael". Deixe esse terminal aberto.' },
+        { t: 'Criar a sua conta de dono', como: ['Abra http://localhost:3000 no navegador', 'Clique em "Começar grátis"', 'Use exatamente o mesmo nome de usuário que você pôs em ADMIN_USUARIOS'] },
+        { t: 'Testar as partes principais', como: [
+          'Abra "Ver as aulas" e leia uma aula sem login',
+          'Jogue a fase 1 de Python (a 1ª vez demora uns segundos carregando o Python)',
+          'Jogue a fase 1 de Java (testa o Java do servidor)',
+          'Toque em 📊 Painel e veja seus números',
+          'Confira as caixas tracejadas "Espaço do anúncio"'] },
+        { t: '(Opcional) Testar todas as 409 respostas', cmd: 'npm run validar', ok: 'terminar com "Tudo certo!". Leva alguns minutos por causa do Java. Abra um segundo terminal (botão + do terminal) para não desligar o servidor.' },
+        { t: '(Opcional) Abrir no celular pelo Wi-Fi', como: ['No terminal, rode ipconfig e anote o "Endereço IPv4" (ex: 192.168.0.15)', 'No celular, no mesmo Wi-Fi, abra http://192.168.0.15:3000', 'Se o Windows perguntar sobre o firewall, permita em "Redes privadas"'], cmd: 'ipconfig' }
+      ],
+      erros: [
+        { p: 'EADDRINUSE :::3000', s: 'A porta 3000 já está em uso (talvez outro servidor aberto). Feche os outros terminais ou mude PORT=3001 no .env.' },
+        { p: '"Java NÃO encontrado" ao ligar', s: 'Volte à etapa anterior: o javac precisa funcionar no mesmo terminal. Reabra o VS Code depois de mexer no Path.' },
+        { p: 'Não aparece o 📊 Painel', s: 'O usuário da conta precisa ser igual ao ADMIN_USUARIOS (minúsculas). Depois de mudar o .env, pare o servidor (Ctrl + C) e rode npm start de novo.' },
+        { p: 'npm install deu erro de permissão', s: 'Feche o VS Code, abra de novo e tente outra vez. Evite colocar o projeto dentro do OneDrive.' }
+      ] },
+    { id: 'e3', titulo: 'Guardar no GitHub', quem: 'você', tempo: '10 min', desc: 'Publicar o código (com todo o histórico) num repositório privado.',
+      passos: [
+        { t: 'Adicionar o projeto no GitHub Desktop', como: ['File → Add local repository…', 'Escolha C:\\projetos\\codequest → Add repository'] },
+        { t: 'Publicar como privado', como: ['Clique em Publish repository', 'Deixe marcado "Keep this code private" → Publish'], ok: 'o repositório aparecer em github.com, no seu perfil.' },
+        { t: 'Conferir que o .env NÃO foi junto', como: ['No github.com, abra o repositório e veja que não existe o arquivo .env (ele tem suas senhas e fica só no PC)'] }
+      ] },
+    { id: 'e4', titulo: 'Banco no MongoDB Atlas', quem: 'você', tempo: '15 min', desc: 'Criar o banco online onde ficam as contas e o progresso.',
+      passos: [
+        { t: 'Criar ou usar um cluster Free', como: ['cloud.mongodb.com → Create → Free (ou use o cluster do Organiza+: o CodeQuest usa um banco separado chamado codequest)'] },
+        { t: 'Criar usuário do banco', como: ['Database Access → Add New Database User', 'Senha só com letras e números (sem @ # / e espaços)'] },
+        { t: 'Liberar o acesso de qualquer lugar', como: ['Network Access → Add IP Address → Allow access from anywhere (0.0.0.0/0)'] },
+        { t: 'Copiar a string de conexão', como: ['Database → Connect → Drivers', 'Copie e troque <username> e <password> pelos seus'], cmd: 'mongodb+srv://USUARIO:SENHA@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority' },
+        { t: 'Testar no PC', como: ['Cole a string em MONGODB_URI= no .env e salve', 'Pare o servidor (Ctrl + C) e rode de novo:'], cmd: 'npm start', ok: 'aparecer "Banco: MongoDB conectado". Sua conta antiga era do arquivo local: crie a conta de novo.' }
+      ],
+      erros: [
+        { p: 'bad auth / Authentication failed', s: 'Usuário ou senha errados na string. Crie outra senha só com letras e números.' },
+        { p: 'Demora e dá timeout', s: 'Falta liberar o IP 0.0.0.0/0 em Network Access (pode levar 1 minuto para valer).' }
+      ] },
+    { id: 'e5', titulo: 'Colocar no ar (Render)', quem: 'você', tempo: '20 min + espera', desc: 'Publicar o site com Java, ligado ao Atlas.',
+      passos: [
+        { t: 'Criar o serviço', como: ['render.com → entre com o GitHub', 'New → Web Service → escolha o repositório codequest', 'Language: Docker · Instance Type: Free'] },
+        { t: 'Cadastrar as variáveis', como: ['Em Environment Variables, adicione uma por uma (JWT_SECRET: invente uma frase longa e nunca mude)'],
+          cmd: 'MONGODB_URI=sua-string-do-atlas\nJWT_SECRET=uma-frase-longa-e-aleatoria-1234\nADMIN_USUARIOS=michael\nCONTATO_EMAIL=seu-email@gmail.com\nANUNCIOS_DEMO=0\nFUSO_HORARIO=America/Sao_Paulo' },
+        { t: 'Publicar e esperar o "Live"', como: ['Create Web Service · a primeira vez leva alguns minutos (instala Node e Java)'], ok: 'o status ficar verde "Live" e o endereço https://...onrender.com abrir o site.' },
+        { t: 'Criar sua conta no site online', como: ['Abra o endereço do Render, crie a conta com o usuário do ADMIN_USUARIOS e confira o 📊 Painel'] }
+      ],
+      erros: [
+        { p: 'Não aparece o plano Free com Docker', s: 'Use Language: Node, Build: npm install, Start: npm start. Funciona tudo, menos os exercícios de Java.' },
+        { p: 'Deploy falhou', s: 'Abra a aba Logs no Render e procure a primeira linha vermelha. Quase sempre é a MONGODB_URI errada.' },
+        { p: 'Demora 1 minuto para abrir', s: 'Normal no plano grátis depois de 15 min sem visitas. Um ping do UptimeRobot em /api/saude a cada 10 min resolve.' }
+      ] },
+    { id: 'e6', titulo: 'Domínio próprio', quem: 'você', tempo: '20 min + até 1 dia', desc: 'Endereço profissional (opcional, ajuda na aprovação do AdSense). Cerca de R$ 40 por ano.',
+      passos: [
+        { t: 'Registrar o domínio', como: ['registro.br → pesquise o nome (ex: codequest.com.br) → registre'] },
+        { t: 'Adicionar no Render', como: ['Settings → Custom Domains → Add → o domínio e também o www', 'Anote os registros DNS que o Render mostrar'] },
+        { t: 'Apontar no Registro.br', como: ['Domínio → DNS → Editar zona → crie os registros exatamente como o Render mostrou'], ok: 'o Render mostrar "Verified" e o site abrir com cadeado no seu domínio.' },
+        { t: 'Informar o endereço ao site', cmd: 'SITE_URL=https://seudominio.com.br', como: ['Crie esta variável no Render (sem barra no final)'] }
+      ] },
+    { id: 'e7', titulo: 'Google Search Console', quem: 'você', tempo: '15 min', desc: 'Fazer o Google encontrar e mostrar as 103 aulas na busca.',
+      passos: [
+        { t: 'Adicionar o site', como: ['search.google.com/search-console → Adicionar propriedade → Prefixo do URL → https://seudominio.com.br'] },
+        { t: 'Verificar com a tag HTML', como: ['Escolha "Tag HTML" e copie só o valor de content="..."', 'No Render, crie a variável abaixo com esse valor e espere reiniciar', 'Volte e clique em Verificar'], cmd: 'GOOGLE_VERIFICACAO=codigo-copiado-aqui' },
+        { t: 'Enviar o sitemap', como: ['Menu Sitemaps → digite sitemap.xml → Enviar'], ok: 'o status ficar "Sucesso" e aparecerem 108 URLs descobertos.' }
+      ] },
+    { id: 'e8', titulo: 'Pedir o AdSense', quem: 'você + Google', tempo: '30 min + dias de espera', desc: 'Checklist final e pedido de aprovação. Depois é esperar o e-mail do Google.', espera: true,
+      passos: [
+        { t: 'Conferir o checklist', como: ['Site abre no seu domínio com https', '/aprender abre sem login', '/sobre, /privacidade e /termos mostram seu e-mail', 'ANUNCIOS_DEMO=0', 'Você tem 18 anos ou mais'] },
+        { t: 'Criar a conta no AdSense', como: ['adsense.google.com → Começar → endereço do site · país Brasil', 'Nome e endereço iguais aos dos documentos (a carta do PIN vai para lá)'] },
+        { t: 'Colocar o código de editor no Render', como: ['Copie o ca-pub-... que o AdSense mostrar e crie a variável:'], cmd: 'ADSENSE_CLIENTE=ca-pub-1234567890123456' },
+        { t: 'Conferir o ads.txt', como: ['Abra https://seudominio.com.br/ads.txt'], ok: 'aparecer google.com, pub-..., DIRECT, f08c47fec0942fa0' },
+        { t: 'Solicitar a revisão (sem ligar Anúncios automáticos)', como: ['No AdSense, confirme que o código foi colocado → Solicitar revisão', 'Não ative "Anúncios automáticos": eles colocariam anúncio dentro dos exercícios'] },
+        { t: 'Esperar o e-mail de aprovação', como: ['De alguns dias a algumas semanas. Se recusar, o e-mail diz o motivo: corrija e peça de novo'] }
+      ] },
+    { id: 'e9', titulo: 'Ligar os anúncios', quem: 'você', tempo: '15 min', desc: 'Depois da aprovação: criar o bloco de anúncio e a mensagem para a Europa.',
+      passos: [
+        { t: 'Criar o bloco de anúncio responsivo', como: ['AdSense → Anúncios → Por bloco de anúncios → Anúncios de display → Responsivo → Criar', 'Copie o número de data-ad-slot'] },
+        { t: 'Colocar o número no Render', cmd: 'ADSENSE_SLOT=1234567890' },
+        { t: 'Mensagem de consentimento para a Europa', como: ['AdSense → Privacidade e mensagens → Regulamentos europeus → criar e publicar'] },
+        { t: 'Conferir os anúncios no site', como: ['Aulas, início, fim de fase, revisão, ranking e trilha (pode levar algumas horas). Nunca clique nos seus anúncios'] }
+      ] },
+    { id: 'e10', titulo: 'Receber o dinheiro', quem: 'você + Google', tempo: 'semanas', desc: 'Informações fiscais, PIN pelo correio e conta bancária.', espera: true,
+      passos: [
+        { t: 'Preencher as informações fiscais', como: ['O AdSense pede no primeiro acesso a Pagamentos'] },
+        { t: 'Verificar a identidade', como: ['Quando o saldo chegar ao limite de verificação, envie os documentos pedidos'] },
+        { t: 'Digitar o PIN da carta', como: ['A carta chega em cerca de 3 semanas', '4 meses de prazo · 3 erros suspendem os anúncios'] },
+        { t: 'Cadastrar a conta bancária', como: ['Pagamentos → Adicionar forma de pagamento → transferência para uma conta no seu nome', 'Bancos e serviços de câmbio (Remessa Online, Wise, Nomad) recebem; compare as taxas'] },
+        { t: 'Combinar com um contador como declarar', como: ['Dinheiro do exterior é renda (no Brasil, em geral carnê-leão e declaração anual)'] }
+      ] },
+    { id: 'e11', titulo: 'Crescer e manter', quem: 'você', tempo: '15 min por semana', desc: 'O que faz o ganho crescer e o site continuar saudável. Esta etapa não termina.',
+      passos: [
+        { t: 'Rotina semanal: baixar o backup', como: ['📊 Painel → 💾 Baixar backup → guarde no Google Drive'] },
+        { t: 'Rotina semanal: avisos e desistências', como: ['Painel → Problemas reportados (corrija e marque Resolvido)', 'Painel → Onde as pessoas param (melhore a fase com maior queda)'] },
+        { t: 'Divulgar: vídeos curtos', como: ['Reels, TikTok ou Shorts resolvendo uma fase no celular, com o link da aula'] },
+        { t: 'Divulgar: comunidades e escolas', como: ['Grupos de estudo, r/brdev, LinkedIn; oferecer a escolas e ONGs como material grátis'] },
+        { t: 'Atualizar com segurança', como: ['Siga o fluxograma 5 da aba "Como funciona"'], cmd: 'npm run validar\nnpm run curriculo' }
+      ] }
+  ];
+
+  // ======== Estado salvo no navegador (só para quem está vendo) ========
+  var CHAVE = 'cq-mapa-v1';
+  var feitos = {};
+  try { feitos = JSON.parse(localStorage.getItem(CHAVE) || '{}') || {}; } catch (e) { feitos = {}; }
+  function salvar() { try { localStorage.setItem(CHAVE, JSON.stringify(feitos)); } catch (e) {} }
+  function chave(e, i) { return e.id + ':' + i; }
+  function passoFeito(e, i) { return e.fixo || !!feitos[chave(e, i)]; }
+  function contagem(e) { var n = 0; e.passos.forEach(function (_, i) { if (passoFeito(e, i)) n++; }); return n; }
+  function etapaFeita(e) { return contagem(e) === e.passos.length; }
+  function atual() { for (var i = 0; i < ETAPAS.length; i++) if (!etapaFeita(ETAPAS[i])) return i; return ETAPAS.length - 1; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function estado(e, idx) {
+    var a = atual();
+    if (etapaFeita(e)) return { c: 'feito', t: 'Feito' };
+    if (idx === a) return { c: 'agora', t: 'Você está aqui' };
+    if (e.espera) return { c: 'espera', t: 'Depende do Google' };
+    return { c: 'depois', t: idx === a + 1 ? 'Próxima' : 'Depois' };
+  }
+
+  // ======== Aba: Onde estamos ========
+  function desenharMapa() {
+    var total = 0, feitosN = 0;
+    ETAPAS.forEach(function (e) { total += e.passos.length; feitosN += contagem(e); });
+    var a = atual(), ea = ETAPAS[a];
+    var pct = Math.round(feitosN / total * 100);
+    var html = '<div class="resumo"><div><div class="rotulo">Você está na etapa ' + a + ' de ' + (ETAPAS.length - 1) + '</div>' +
+      '<h2>' + esc(ea.titulo) + '</h2><p>' + esc(ea.desc) + '</p></div>' +
+      '<div><div class="barra" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100" aria-label="Progresso geral"><i style="width:' + pct + '%"></i></div>' +
+      '<div class="contagem">' + feitosN + ' de ' + total + ' tarefas feitas (' + pct + '%)</div>' +
+      '<p><button class="btn" id="ir-atual">Abrir o passo a passo desta etapa</button></p></div></div>' +
+      '<div class="legenda"><span><i style="background:var(--certo)"></i>Feito</span><span><i style="background:var(--estrela)"></i>Você está aqui</span><span><i style="border:2px solid var(--espera)"></i>Depende do Google</span><span><i style="border:2px solid var(--linha)"></i>Depois</span></div>' +
+      '<ol class="trilha">' + ETAPAS.map(function (e, i) {
+        var st = estado(e, i), c = contagem(e);
+        return '<li class="parada ' + st.c + '"><div class="ponto" aria-hidden="true">' + (st.c === 'feito' ? '✓' : i) + '</div>' +
+          '<button class="parada-corpo" data-etapa="' + i + '" aria-label="Etapa ' + i + ': ' + esc(e.titulo) + ' — ' + st.t + '">' +
+          '<div class="parada-topo"><h3>' + esc(e.titulo) + '</h3><span class="chip ' + st.c + '">' + st.t + '</span></div>' +
+          '<p class="parada-desc">' + esc(e.desc) + '</p>' +
+          '<div class="parada-meta"><span>Quem faz: <b>' + esc(e.quem) + '</b></span><span>Tempo: <b>' + esc(e.tempo) + '</b></span><span>' + c + '/' + e.passos.length + ' tarefas</span></div>' +
+          '<div class="mini"><i style="width:' + Math.round(c / e.passos.length * 100) + '%"></i></div></button></li>';
+      }).join('') + '</ol>';
+    var el = document.getElementById('vista-mapa');
+    el.innerHTML = html;
+    document.getElementById('ir-atual').onclick = function () { abrirEtapa(a); };
+    el.querySelectorAll('.parada-corpo').forEach(function (b) { b.onclick = function () { abrirEtapa(Number(b.dataset.etapa)); }; });
+  }
+
+  // ======== Aba: Passo a passo ========
+  var etapaAberta = null;
+  function abrirEtapa(i) { etapaAberta = i; mostrar("passos"); window.scrollTo({ top: 0 }); }
+  function desenharPassos() {
+    var i = etapaAberta == null ? atual() : etapaAberta;
+    var e = ETAPAS[i];
+    var html = '<div class="indice" role="navigation" aria-label="Etapas">' + ETAPAS.map(function (x, k) {
+      return '<button data-etapa="' + k + '" class="' + (k === i ? 'ativo' : etapaFeita(x) ? 'ok' : '') + '" aria-current="' + (k === i) + '">' + (etapaFeita(x) && k !== i ? '✓ ' : '') + k + '. ' + esc(x.titulo) + '</button>';
+    }).join('') + '</div>' +
+      '<article class="etapa"><header class="etapa-cab"><div class="rotulo">Etapa ' + i + ' de ' + (ETAPAS.length - 1) + '</div><h2>' + esc(e.titulo) + '</h2><p>' + esc(e.desc) + '</p>' +
+      '<div class="fatos"><span>Quem faz: <b>' + esc(e.quem) + '</b></span><span>Tempo: <b>' + esc(e.tempo) + '</b></span><span><b>' + contagem(e) + '/' + e.passos.length + '</b> feitas</span></div></header>' +
+      (e.fixo ? '<div class="aviso"><b>Esta etapa já está pronta.</b> Ela foi feita aqui na conversa e está no arquivo codequest.zip.</div>' : '') +
+      '<ol class="passos">' + e.passos.map(function (p, k) {
+        var feito = passoFeito(e, k), idc = 'p-' + e.id + '-' + k;
+        return '<li class="passo' + (feito ? ' feito' : '') + '"><input type="checkbox" id="' + idc + '" data-k="' + k + '"' + (feito ? ' checked' : '') + (e.fixo ? ' disabled' : '') + '>' +
+          '<div class="passo-corpo"><label class="passo-titulo" for="' + idc + '">' + (k + 1) + '. ' + esc(p.t) + '</label>' +
+          (p.como ? '<ul class="passo-como">' + p.como.map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ul>' : '') +
+          (p.cmd ? '<div class="cmd"><pre>' + esc(p.cmd) + '</pre><button type="button" data-copiar="' + esc(p.cmd) + '">Copiar</button></div>' : '') +
+          (p.ok ? '<div class="ok-msg">' + esc(p.ok) + '</div>' : '') + '</div></li>';
+      }).join('') + '</ol>' +
+      (e.erros ? '<details class="problemas"><summary>Deu erro? Veja os mais comuns</summary><dl>' + e.erros.map(function (x) { return '<dt>' + esc(x.p) + '</dt><dd>' + esc(x.s) + '</dd>'; }).join('') + '</dl></details>' : '') +
+      '<div class="nav-etapa">' + (i > 0 ? '<button class="btn btn-sec" data-etapa="' + (i - 1) + '">‹ Etapa anterior</button>' : '<span></span>') +
+      (i < ETAPAS.length - 1 ? '<button class="btn" data-etapa="' + (i + 1) + '">Próxima etapa ›</button>' : '') + '</div></article>';
+    var el = document.getElementById('vista-passos');
+    el.innerHTML = html;
+    el.querySelectorAll('[data-etapa]').forEach(function (b) { b.onclick = function () { etapaAberta = Number(b.dataset.etapa); desenharPassos(); window.scrollTo({ top: 0 }); }; });
+    el.querySelectorAll('input[type=checkbox]').forEach(function (c) {
+      c.onchange = function () {
+        var k = Number(c.dataset.k);
+        if (c.checked) feitos[chave(e, k)] = 1; else delete feitos[chave(e, k)];
+        salvar();
+        var foco = c.id;
+        desenharPassos();
+        var novo = document.getElementById(foco); if (novo) novo.focus();
+      };
+    });
+    el.querySelectorAll('[data-copiar]').forEach(function (b) {
+      b.onclick = function () {
+        var txt = b.getAttribute('data-copiar');
+        var pronto = function () { b.textContent = 'Copiado'; setTimeout(function () { b.textContent = 'Copiar'; }, 1500); };
+        try {
+          navigator.clipboard.writeText(txt).then(pronto, function () { selecionar(b); });
+        } catch (err) { selecionar(b); }
+      };
+    });
+  }
+  function selecionar(b) {
+    var pre = b.parentNode.querySelector('pre');
+    var r = document.createRange(); r.selectNodeContents(pre);
+    var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    b.textContent = 'Ctrl+C';
+  }
+
+  // ======== Abas ========
+  var VISTAS = ['mapa', 'passos', 'fluxos'];
+  function mostrar(v) {
+    VISTAS.forEach(function (x) {
+      document.getElementById('vista-' + x).hidden = x !== v;
+      document.getElementById('aba-' + x).setAttribute('aria-selected', String(x === v));
+    });
+    if (v === 'mapa') desenharMapa();
+    if (v === 'passos') desenharPassos();
+    try { history.replaceState(null, '', '#' + v); } catch (e) {}
+  }
+  document.querySelectorAll('.aba').forEach(function (a) { a.onclick = function () { mostrar(a.dataset.vista); }; });
+  var inicio = (location.hash || '').replace('#', '');
+  mostrar(VISTAS.indexOf(inicio) >= 0 ? inicio : 'mapa');
+})();
+</script>

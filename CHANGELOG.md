@@ -10,6 +10,15 @@ Formato: **MAIOR.MENOR.CORREÇÃO**
 
 ---
 
+## [1.2.1] — 2026-10-21 — Mapa visual do projeto
+
+- **`docs/mapa-codequest.html`**: guia visual (abra no navegador) com:
+  - **Onde estamos:** trilha das 12 etapas (construir → rodar no PC → GitHub → Atlas → Render → domínio → Search Console → AdSense → anúncios → pagamento → crescer), com tarefas para marcar;
+  - **Passo a passo** para Windows 11, com comandos para copiar, "deu certo se…" e erros comuns (Java pelo `jbr` do Android Studio);
+  - **Como funciona:** 5 fluxogramas (peças do sistema, jornada do aluno, botão Verificar, caminho do dinheiro, como atualizar).
+
+---
+
 ## [1.2.0] — 2026-10-21 — Curso completo e ferramentas do dono
 
 ### Curso: de 76 para 103 fases (de 319 para 409 exercícios)
