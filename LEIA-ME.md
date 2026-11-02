@@ -20,7 +20,8 @@ Plataforma gamificada para aprender programação em português, no celular ou n
 - **Revisão espaçada**: o que você aprendeu volta em 1, 3, 7, 14, 30 e 60 dias
 - Código roda de verdade: quase tudo **dentro do navegador** (nada sai do aparelho); só o Java roda **no servidor**
 - Funciona como aplicativo no celular (dá para "Adicionar à tela inicial")
-- **Grátis para quem estuda, sem certificado**, mantido por **anúncios do Google (AdSense)**
+- **Grátis para quem estuda**, mantido por **anúncios do Google (AdSense)**
+- **Prova final e certificado de conclusão** (ilustrativo, sem reconhecimento do MEC) em cada trilha: carga horária estimada, habilidades, nota e código de verificação em `/certificado/CÓDIGO`
 - **Site público com todas as aulas abertas** (para o Google aprovar o AdSense e trazer visitas pela busca)
 - **Painel do dono** com usuários, visitantes, quem usa de verdade, gráfico de 30 dias e onde as pessoas desistem
 

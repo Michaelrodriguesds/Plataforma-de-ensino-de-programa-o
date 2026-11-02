@@ -8,6 +8,8 @@
   var C = (window.CURSOS = window.CURSOS || {});
   C.javascript = {
     id: 'javascript', nome: 'JavaScript', icone: '🟨', cor: '#F2C94C', ling: 'javascript',
+    // usadas no certificado de conclusão
+    habilidades: ['Variáveis, tipos e operadores', 'Condições, laços e funções (incluindo arrow functions)', 'Arrays e objetos: map, filter, reduce e desestruturação', 'Orientação a Objetos com classes e protótipos', 'Programação assíncrona: Promises, async/await', 'Manipulação de páginas (DOM), eventos e formulários', 'Módulos, closures, iteradores e geradores'],
     desc: 'A linguagem da web: roda em todo navegador, em servidores (Node) e em apps.',
     mundos: [
       // ===================================================== MUNDO 1

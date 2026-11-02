@@ -1,7 +1,7 @@
 // Service Worker: guarda os arquivos do site no aparelho para abrir
 // mais rápido (e até sem internet nas telas que já foram abertas).
 // Ao mudar arquivos do site, aumente a VERSAO para forçar atualização.
-const VERSAO = 'cq-v5';
+const VERSAO = 'cq-v6';
 const ARQUIVOS = [
   '/app', '/css/estilo.css', '/manifest.webmanifest', '/icones/icone.svg',
   '/js/app.js', '/js/realce.js', '/js/consentimento.js', '/js/anuncios.js', '/js/rastreio.js', '/js/publico.js', '/js/editor.js', '/js/erros.js', '/js/executor.js', '/js/efeitos.js',

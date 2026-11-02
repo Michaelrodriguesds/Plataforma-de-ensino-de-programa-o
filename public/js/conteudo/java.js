@@ -12,6 +12,8 @@
   var C = (window.CURSOS = window.CURSOS || {});
   C.java = {
     id: 'java', nome: 'Java', icone: '☕', cor: '#FF8A4C', ling: 'java',
+    // usadas no certificado de conclusão
+    habilidades: ['Tipos, variáveis e operadores', 'Condições, laços e métodos', 'Arrays, matrizes e coleções (List, Map, Set)', 'Orientação a Objetos: classes, encapsulamento, herança e interfaces', 'Exceções e tratamento de erros', 'enum, Comparator, Optional e recursos modernos', 'Leitura de dados com Scanner'],
     desc: 'Linguagem robusta usada em bancos, sistemas de empresas e apps Android. Ótima para aprender Orientação a Objetos.',
     mundos: [
       // ===================================================== MUNDO 1

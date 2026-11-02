@@ -15,6 +15,8 @@
   var C = (window.CURSOS = window.CURSOS || {});
   C.python = {
     id: 'python', nome: 'Python', icone: '🐍', cor: '#5B9BFF', ling: 'python',
+    // usadas no certificado de conclusão
+    habilidades: ['Variáveis, tipos e operações', 'Decisões (if) e repetições (for, while)', 'Funções e organização do código', 'Listas, dicionários, tuplas e conjuntos', 'Arquivos, JSON e tratamento de erros', 'Orientação a Objetos: classes, herança, polimorfismo e métodos especiais', 'Testes e boas práticas'],
     desc: 'A linguagem mais amigável para começar. Usada em automação, dados, IA e sites.',
     mundos: [
       // ===================================================== MUNDO 1

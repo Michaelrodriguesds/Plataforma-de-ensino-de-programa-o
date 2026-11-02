@@ -84,6 +84,8 @@ INSERT INTO agendamentos VALUES
 
   C.sql = {
     id: 'sql', nome: 'SQL e Bancos de Dados', icone: '🗄️', cor: '#B39DDB', ling: 'sql',
+    // usadas no certificado de conclusão
+    habilidades: ['Consultas com SELECT, WHERE e ORDER BY', 'Filtros com IN, BETWEEN, LIKE e NULL', 'Agregações: COUNT, SUM, AVG, GROUP BY e HAVING', 'Funções de texto, datas e CASE', 'Relacionamentos: chaves primárias e estrangeiras', 'JOIN, LEFT JOIN e subconsultas', 'Criação e alteração de dados: CREATE, INSERT, UPDATE e DELETE'],
     desc: 'Onde os sistemas guardam tudo: clientes, vendas, agendamentos. Consultar, resumir, juntar e criar tabelas com SQL.',
     banco: TUDO,
     mundos: [

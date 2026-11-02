@@ -16,6 +16,8 @@
   var C = (window.CURSOS = window.CURSOS || {});
   C.react = {
     id: 'react', nome: 'React', icone: '⚛️', cor: '#61DAFB', ling: 'react',
+    // usadas no certificado de conclusão
+    habilidades: ['Componentes e JSX', 'Props, listas e renderização condicional', 'Estado com useState e eventos', 'Formulários controlados', 'Estado imutável com arrays e objetos', 'Efeitos (useEffect) e consumo de APIs', 'useRef, valores calculados e Context'],
     desc: 'A biblioteca mais usada para criar interfaces: componentes, estado, eventos e dados vindos da API.',
     mundos: [
       // ===================================================== MUNDO 1

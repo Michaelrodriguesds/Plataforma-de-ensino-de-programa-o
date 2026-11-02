@@ -20,6 +20,8 @@
   }
   C.htmlcss = {
     id: 'htmlcss', nome: 'HTML e CSS', icone: '🎨', cor: '#F06292', ling: 'html',
+    // usadas no certificado de conclusão
+    habilidades: ['Estrutura de páginas com HTML semântico', 'Links, imagens, listas e tabelas', 'Formulários acessíveis', 'Acessibilidade e SEO básico', 'CSS: seletores, cores, fontes e modelo de caixa', 'Layout com Flexbox e CSS Grid', 'Sites responsivos (mobile first) e transições'],
     desc: 'O começo de todo site: HTML monta a estrutura e o CSS deixa bonito. Do primeiro título ao layout responsivo.',
     mundos: [
       // ===================================================== MUNDO 1

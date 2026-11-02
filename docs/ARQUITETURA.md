@@ -125,7 +125,9 @@ xp, semana {key, xp}, hoje {dia, xp}, metaDiaria,
 ofensiva, maxOfensiva, ultimoDia, protetores,
 fases { 'py-01': {estrelas, melhorXp, vezes, em} },
 revisao { 'py-01:0': {caixa, proxima} }, revisoesCertas,
-conquistas [ids]
+conquistas [ids],
+provas { 'git': {tentativas: [{dia, em, nota}], melhor, aprovado: {nota, em}} },
+certificados { 'git': {codigo, curso, nome, nota, horas, em} }, codigosCert [códigos]
 ```
 
 **Coleções de estatística** (Mongo; no modo arquivo ficam dentro de `metricas`):
@@ -152,6 +154,11 @@ conquistas [ids]
 | `GET /api/admin/painel`, `/feedback`, `/backup` | admin | Painel, avisos, backup |
 | `POST /api/admin/usuarios/:u/senha`, `DELETE /api/admin/usuarios/:u` | admin | Senha provisória, remover |
 | `GET /api/saude`, `/api/meta` | — | Verificação e conquistas |
+| `POST /api/sugestao` | opcional | Sugestões, pedidos, problemas e elogios |
+| `GET /api/prova/:trilha` | ✔ | Situação da prova final (liberada, tentativas, melhor nota, certificado) |
+| `POST /api/prova/:trilha/iniciar`, `/enviar` | ✔ | Sorteia as perguntas (token assinado) e corrige |
+| `POST /api/certificados/:trilha` | ✔ | Emite ou atualiza o certificado (nome completo) |
+| `GET /certificado/:codigo` | — | Página pública do certificado (imprimir, PDF, LinkedIn) |
 
 ## Variáveis de ambiente
 

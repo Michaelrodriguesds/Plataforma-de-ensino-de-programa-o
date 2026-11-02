@@ -27,7 +27,7 @@ function criarPaginas({ cursos, config }) {
   // Bloco de anúncio: um espaço reservado; o JavaScript da página coloca o anúncio do Google
   const anuncio = () => '<div class="anuncio-slot" aria-hidden="true"></div>';
 
-  function layout(req, { titulo, descricao, corpo, caminho, jsonLd, semAnuncio }) {
+  function layout(req, { titulo, descricao, corpo, caminho, jsonLd, semAnuncio, semIndice, classe }) {
     const base = config.siteUrl(req);
     const tituloCompleto = titulo ? `${titulo} | CodeQuest` : 'CodeQuest — aprenda programação de graça, jogando';
     return `<!doctype html>
@@ -38,6 +38,7 @@ function criarPaginas({ cursos, config }) {
 <title>${esc(tituloCompleto)}</title>
 <meta name="description" content="${esc(descricao)}">
 <link rel="canonical" href="${esc(base + caminho)}">
+${semIndice ? '<meta name="robots" content="noindex">' : ''}
 <meta property="og:type" content="website">
 <meta property="og:title" content="${esc(tituloCompleto)}">
 <meta property="og:description" content="${esc(descricao)}">
@@ -56,7 +57,7 @@ ${config.verificacaoGoogle ? `<meta name="google-site-verification" content="${e
 ${config.scriptConfig(semAnuncio)}
 ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g, '\\u003c')}</script>` : ''}
 </head>
-<body class="pub">
+<body class="pub${classe ? ' ' + classe : ''}">
 <header class="pub-topo">
   <a href="/" class="marca">Code<span>Quest</span></a>
   <nav aria-label="Site">
@@ -135,7 +136,7 @@ ${anuncio()}
 <section class="pub-secao pub-faq">
   <h2>Perguntas frequentes</h2>
   <details><summary>É grátis mesmo?</summary><p>Sim. Todas as fases, exercícios e o ranking são gratuitos. O site se mantém com anúncios exibidos fora dos exercícios.</p></details>
-  <details><summary>Tem certificado?</summary><p>Não. O foco é aprender e praticar. O que você leva é o conhecimento e o hábito de programar todo dia.</p></details>
+  <details><summary>Tem certificado?</summary><p>Sim. Ao concluir todas as fases de uma trilha e passar na prova final (70% de acertos), você recebe um certificado de conclusão com a carga horária estimada, as habilidades trabalhadas e um código para qualquer pessoa conferir. Ele é ilustrativo: o CodeQuest não é reconhecido pelo MEC, então o certificado não vale como diploma. Mas mostra o que você estudou, e o seu código no GitHub mostra o que você sabe fazer.</p></details>
   <details><summary>Preciso instalar alguma coisa?</summary><p>Não. Tudo roda no navegador: o Python, o banco de dados SQL, o servidor Node, o React e até um terminal com Git de treino. No celular você pode tocar em "Adicionar à tela inicial" para usar como aplicativo.</p></details>
   <details><summary>Nunca programei. Consigo?</summary><p>Consegue. A primeira fase começa do zero absoluto: mostrar uma mensagem na tela.</p></details>
   <details><summary>Por que criar conta?</summary><p>Para salvar seu progresso, suas estrelas e sua ofensiva, receber a revisão do dia e aparecer no ranking. As aulas para leitura são abertas para todos.</p></details>
@@ -253,7 +254,7 @@ ${anuncio()}
 <article class="pub-texto">
 <h1>Sobre o CodeQuest</h1>
 <p>O CodeQuest é uma plataforma <b>gratuita</b> para aprender e praticar programação em português. Nasceu da vontade de estudar Python, JavaScript e Java de um jeito que coubesse na rotina de quem trabalha: lições curtas, exercícios de verdade e um pouquinho todo dia.</p>
-<p>Não vendemos cursos e não emitimos certificados. O site é mantido por anúncios do Google exibidos fora dos exercícios.</p>
+<p>Não vendemos cursos. Quem conclui uma trilha e passa na prova final recebe um certificado de conclusão ilustrativo, grátis, com a carga horária estimada e um código de verificação. Ele não é reconhecido pelo MEC. O site é mantido por anúncios do Google exibidos fora dos exercícios.</p>
 <h2>Como as aulas foram pensadas</h2>
 <ul>
 <li><b>Prever, rodar, modificar e criar</b>: você lê o código, tenta adivinhar o resultado, roda para conferir e depois escreve o seu.</li>
@@ -315,7 +316,7 @@ ${config.ga ? '<p>Também usamos o Google Analytics para estatísticas de visita
 <h1>Termos de uso</h1>
 <p><i>Última atualização: ${esc(config.dataPolitica)}</i></p>
 <ol>
-<li><b>Serviço gratuito.</b> O CodeQuest é oferecido de graça, "como está", para fins de estudo. Não emitimos certificados. O serviço pode mudar, ficar fora do ar ou ser encerrado.</li>
+<li><b>Serviço gratuito.</b> O CodeQuest é oferecido de graça, "como está", para fins de estudo. Os certificados de conclusão são ilustrativos: não têm reconhecimento do MEC nem valor de diploma, e a carga horária é uma estimativa. Um certificado pode ser cancelado se for obtido de forma fraudulenta. O serviço pode mudar, ficar fora do ar ou ser encerrado.</li>
 <li><b>Sua conta.</b> Você é responsável pela sua senha. Escolha um nome e um nome de usuário respeitosos: eles aparecem no ranking.</li>
 <li><b>Uso correto.</b> É proibido tentar invadir, sobrecarregar ou burlar o sistema (inclusive o ranking), enviar código malicioso para o executor de Java ou usar a plataforma para qualquer atividade ilegal. Contas que fizerem isso podem ser removidas.</li>
 <li><b>Conteúdo.</b> As aulas e exercícios são do CodeQuest. Você pode usá-los para estudar; para republicar, peça autorização.</li>
@@ -338,7 +339,53 @@ ${config.ga ? '<p>Também usamos o Google Analytics para estatísticas de visita
     return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(u => `  <url><loc>${esc(base + u)}</loc></url>`).join('\n')}\n</urlset>\n`;
   }
 
-  return { inicio, aprender, trilha, licao, sobre, privacidade, termos, naoEncontrada, sitemap };
+  // ---------- Certificado de conclusão (ilustrativo) ----------
+  const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+  function certificado(req, cert, curso) {
+    const base = config.siteUrl(req);
+    const d = new Date(cert.em);
+    const dataExtenso = `${d.getDate()} de ${MESES[d.getMonth()]} de ${d.getFullYear()}`;
+    const url = `${base}/certificado/${cert.codigo}`;
+    const linkedin = 'https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&' + new URLSearchParams({
+      name: `${curso.nome} (CodeQuest)`, organizationName: 'CodeQuest', issueYear: String(d.getFullYear()), issueMonth: String(d.getMonth() + 1), certUrl: url, certId: cert.codigo
+    }).toString();
+    const whatsapp = 'https://wa.me/?text=' + encodeURIComponent(`Concluí a trilha ${curso.nome} no CodeQuest! 🎓 ${url}`);
+    const fases = curso.mundos.reduce((t, m) => t + m.fases.length, 0);
+    const corpo = `
+<div class="cert-acoes nao-imprimir">
+  <button class="btn" type="button" onclick="window.print()">🖨️ Imprimir ou salvar em PDF</button>
+  <a class="btn btn-sec" href="${esc(linkedin)}" target="_blank" rel="noopener">Adicionar ao LinkedIn</a>
+  <a class="btn btn-sec" href="${esc(whatsapp)}" target="_blank" rel="noopener">Compartilhar no WhatsApp</a>
+</div>
+<article class="certificado" style="--cor:${esc(curso.cor)}">
+  <div class="cert-moldura">
+    <header class="cert-topo">
+      <span class="cert-marca">Code<b>Quest</b></span>
+      <span class="cert-selo" aria-hidden="true">${curso.icone}</span>
+    </header>
+    <p class="cert-rotulo">Certificado de conclusão</p>
+    <p class="cert-texto">Certificamos que</p>
+    <h1 class="cert-nome">${esc(cert.nome)}</h1>
+    <p class="cert-texto">concluiu a trilha <b>${esc(curso.nome)}</b> na plataforma CodeQuest, com <b>${fases} fases</b> de lições e exercícios práticos, carga horária estimada de <b>${cert.horas} horas</b>, e foi aprovado(a) na prova final com <b>${cert.nota}% de acertos</b>.</p>
+    <div class="cert-habilidades">
+      <p class="cert-subtitulo">Habilidades trabalhadas</p>
+      <ul>${(curso.habilidades || []).map(h => `<li>${esc(h)}</li>`).join('')}</ul>
+    </div>
+    <footer class="cert-rodape">
+      <div><span class="cert-linha"></span><b>CodeQuest</b><small>${esc(dataExtenso)}</small></div>
+      <div class="cert-codigo"><small>Código de verificação</small><b>${esc(cert.codigo)}</b><small>${esc(base.replace(/^https?:\/\//, ''))}/certificado/${esc(cert.codigo)}</small></div>
+    </footer>
+    <p class="cert-aviso">Certificado livre, de caráter ilustrativo, emitido por plataforma de ensino gratuita. Não é reconhecido pelo MEC e não substitui diploma de curso técnico ou superior.</p>
+  </div>
+</article>
+<p class="cert-verificado nao-imprimir">✔ Este certificado é verdadeiro: ele foi emitido pelo CodeQuest para ${esc(cert.nome)} em ${esc(dataExtenso)}. <a href="/aprender/${esc(curso.id)}">Conheça a trilha ${esc(curso.nome)}</a> ou <a href="/app#/cadastro">comece a sua grátis</a>.</p>`;
+    return layout(req, {
+      caminho: '/certificado/' + cert.codigo, titulo: `Certificado: ${curso.nome} — ${cert.nome}`, corpo, semAnuncio: true, semIndice: true, classe: 'pub-cert',
+      descricao: `${cert.nome} concluiu a trilha ${curso.nome} no CodeQuest (${cert.horas} horas, nota ${cert.nota}%).`
+    });
+  }
+
+  return { inicio, aprender, trilha, licao, sobre, privacidade, termos, naoEncontrada, sitemap, certificado };
 }
 
 module.exports = { criarPaginas };

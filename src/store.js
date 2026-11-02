@@ -69,6 +69,9 @@ class ArquivoStore {
   async buscarPorId(id) {
     return structuredClone(this.usuarios.find(u => u._id === id) || null);
   }
+  async buscarPorCertificado(codigo) {
+    return structuredClone(this.usuarios.find(u => (u.codigosCert || []).includes(codigo)) || null);
+  }
   async criar(doc) {
     doc._id = crypto.randomUUID();
     this.usuarios.push(structuredClone(doc));
@@ -165,7 +168,7 @@ class ArquivoStore {
   async listarFeedback(limite) { return structuredClone(this.feedback.slice(0, limite)); }
   async excluirFeedback(id) { this.feedback = this.feedback.filter(f => f._id !== id); await this._gravar(); }
   async resumoUsuarios() {
-    return this.usuarios.map(u => ({ _id: u._id, nome: u.nome, usuario: u.usuario, avatar: u.avatar, criadoEm: u.criadoEm, xp: u.xp, ultimoDia: u.ultimoDia, ofensiva: u.ofensiva, fases: Object.keys(u.fases || {}) }));
+    return this.usuarios.map(u => ({ _id: u._id, nome: u.nome, usuario: u.usuario, avatar: u.avatar, criadoEm: u.criadoEm, xp: u.xp, ultimoDia: u.ultimoDia, ofensiva: u.ofensiva, fases: Object.keys(u.fases || {}), certificados: (u.codigosCert || []).length }));
   }
 }
 
@@ -185,6 +188,7 @@ class MongoStore {
     this.fb = db.collection('feedback');            // avisos de problema nas aulas
     await this.col.createIndex({ usuario: 1 }, { unique: true });
     await this.col.createIndex({ xp: -1 });
+    await this.col.createIndex({ codigosCert: 1 }); // conferir certificados pelo código
     await this.col.createIndex({ 'semana.key': 1, 'semana.xp': -1 });
     await this.visit.createIndex({ dia: 1 });
     await this.vids.createIndex({ primeiro: 1 });
@@ -196,6 +200,7 @@ class MongoStore {
   }
   async buscarPorUsuario(usuario) { return this.col.findOne({ usuario }); }
   async buscarPorId(id) { return this.col.findOne({ _id: id }); }
+  async buscarPorCertificado(codigo) { return this.col.findOne({ codigosCert: codigo }); }
   async criar(doc) {
     doc._id = crypto.randomUUID(); // usamos texto como id, igual à versão arquivo
     await this.col.insertOne(doc);
@@ -276,8 +281,8 @@ class MongoStore {
   async listarFeedback(limite) { return this.fb.find({}).sort({ em: -1 }).limit(limite).toArray(); }
   async excluirFeedback(id) { await this.fb.deleteOne({ _id: id }); }
   async resumoUsuarios() {
-    const lista = await this.col.find({}, { projection: { nome: 1, usuario: 1, avatar: 1, criadoEm: 1, xp: 1, ultimoDia: 1, ofensiva: 1, fases: 1 } }).toArray();
-    return lista.map(u => ({ ...u, fases: Object.keys(u.fases || {}) }));
+    const lista = await this.col.find({}, { projection: { nome: 1, usuario: 1, avatar: 1, criadoEm: 1, xp: 1, ultimoDia: 1, ofensiva: 1, fases: 1, codigosCert: 1 } }).toArray();
+    return lista.map(u => ({ ...u, fases: Object.keys(u.fases || {}), certificados: (u.codigosCert || []).length, codigosCert: undefined }));
   }
 }
 

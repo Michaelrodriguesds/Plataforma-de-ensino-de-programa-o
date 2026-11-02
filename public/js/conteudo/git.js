@@ -22,6 +22,8 @@ git commit -m "Primeira versão"`;
 
   C.git = {
     id: 'git', nome: 'Git, Terminal e Deploy', icone: '🌿', cor: '#F4645F', ling: 'terminal',
+    // usadas no certificado de conclusão
+    habilidades: ['Uso do terminal: pastas, arquivos e caminhos', 'Controle de versão com Git: add, commit, log, diff e restore', '.gitignore e proteção de segredos', 'Branches, merge e resolução de conflitos', 'GitHub: remote, push, pull, clone e trabalho em equipe', 'npm, package.json e scripts', 'Variáveis de ambiente e deploy de aplicações'],
     desc: 'As ferramentas de todo dia de quem programa: terminal, Git, GitHub, npm e colocar o projeto no ar.',
     mundos: [
       // ===================================================== MUNDO 1

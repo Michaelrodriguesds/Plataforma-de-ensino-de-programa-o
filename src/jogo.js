@@ -250,7 +250,68 @@ function registrarRevisao(u, fasesIdx, resultados) {
   return { xpGanho, certas, conquistas: novas, ofensivaSubiu: u.ofensiva > ofensivaAntes };
 }
 
+// ---------- 8. Prova final e certificado ----------
+// Ao concluir TODAS as fases de uma trilha, a pessoa faz uma prova de
+// múltipla escolha (perguntas sorteadas das fases, sem dicas) e, se acertar
+// pelo menos 70%, recebe um certificado de conclusão ilustrativo.
+const PROVA = { questoes: 15, minimo: 0.7, tentativasPorDia: 3 };
+
+// Carga horária estimada: tempo de leitura + exercícios, com folga para
+// revisão e prática (iniciantes demoram mais: por isso o fator 1,5).
+function cargaHoraria(curso) {
+  let min = 0;
+  for (const m of curso.mundos) for (const f of m.fases) {
+    min += (f.licao || []).length * 5;
+    for (const e of f.ex || []) {
+      if (e.tipo === 'quiz' || e.tipo === 'prever') min += 1.5;
+      else if (e.tipo === 'codigo') min += (f.xp || 0) >= 60 ? 25 : 12;
+      else min += 3;
+    }
+  }
+  return Math.ceil(min * 1.5 / 60);
+}
+// Perguntas que podem cair na prova (as de escolha: pergunta e prever)
+function bancoProva(curso) {
+  const ids = [];
+  for (const m of curso.mundos) for (const f of m.fases) {
+    (f.ex || []).forEach((e, i) => { if (e.tipo === 'quiz' || e.tipo === 'prever') ids.push(f.id + ':' + i); });
+  }
+  return ids;
+}
+function exercicioPorId(curso, id) {
+  const [faseId, idx] = String(id).split(':');
+  for (const m of curso.mundos) for (const f of m.fases) if (f.id === faseId) return (f.ex || [])[Number(idx)] || null;
+  return null;
+}
+function sortear(lista, n) {
+  const a = lista.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a.slice(0, n);
+}
+function situacaoProva(u, curso) {
+  const total = curso.mundos.reduce((t, m) => t + m.fases.length, 0);
+  const feitas = curso.mundos.reduce((t, m) => t + m.fases.filter(f => u.fases && u.fases[f.id]).length, 0);
+  const p = (u.provas || {})[curso.id] || { tentativas: [] };
+  const hoje = hojeStr();
+  const hojeN = p.tentativas.filter(t => t.dia === hoje).length;
+  return {
+    liberada: feitas === total, faltam: total - feitas,
+    tentativasHoje: hojeN, restantesHoje: Math.max(0, PROVA.tentativasPorDia - hojeN),
+    melhor: p.melhor || 0, aprovado: !!p.aprovado,
+    certificado: (u.certificados || {})[curso.id] || null,
+    questoes: Math.min(PROVA.questoes, bancoProva(curso).length), minimo: PROVA.minimo, horas: cargaHoraria(curso)
+  };
+}
+function gerarCodigoCertificado() {
+  const ALF = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sem letras que confundem (0/O, 1/I)
+  const b = require('crypto').randomBytes(8);
+  let s = '';
+  for (let i = 0; i < 8; i++) s += ALF[b[i] % ALF.length];
+  return 'CQ-' + s.slice(0, 4) + '-' + s.slice(4);
+}
+
 module.exports = {
+  PROVA, cargaHoraria, bancoProva, exercicioPorId, sortear, situacaoProva, gerarCodigoCertificado,
   carregarCursos, novoUsuario, usuarioPublico, concluirFase, registrarRevisao,
   CONQUISTAS, semanaKey, hojeStr, nivelDoXp, calcularEstrelas, somarDias, diasEntre
 };

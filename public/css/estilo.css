@@ -623,3 +623,50 @@ pre.terminal, .saida pre.terminal { background: #0B0A16; color: #E6E3FF; border:
 .selo-elogio { color: var(--certo); }
 .nota-msg { color: var(--estrela); letter-spacing: 1px; }
 .nota-msg i { color: var(--linha); font-style: normal; }
+
+/* ---------- Certificado (v1.4) ---------- */
+.cert-acoes { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 8px 0 16px; }
+.certificado { --papel: #FFFDF7; --tinta: #1E1B3A; --ouro: #B8892B; background: var(--papel); color: var(--tinta); border-radius: 6px; padding: 14px; max-width: 900px; margin: 0 auto; box-shadow: 0 10px 40px rgba(0,0,0,.35); }
+.cert-moldura { border: 3px double var(--ouro); padding: clamp(18px, 4vw, 44px); display: grid; gap: 10px; text-align: center; position: relative; }
+.cert-moldura::before { content: ""; position: absolute; inset: 6px; border: 1px solid color-mix(in srgb, var(--ouro) 45%, transparent); pointer-events: none; }
+.cert-topo { display: flex; justify-content: space-between; align-items: center; }
+.cert-marca { font: 800 1.3rem var(--fonte-titulo); color: var(--tinta); }
+.cert-marca b { color: var(--ouro); }
+.cert-selo { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; font-size: 1.7rem; border: 2px solid var(--ouro); background: color-mix(in srgb, var(--cor) 18%, var(--papel)); }
+.cert-rotulo { margin: 6px 0 0; font: 700 .85rem var(--fonte-texto); letter-spacing: .25em; text-transform: uppercase; color: var(--ouro); }
+.cert-texto { margin: 0 auto; max-width: 62ch; font-size: 1.05rem; line-height: 1.6; }
+.cert-nome { margin: 4px 0; font: 700 clamp(1.7rem, 5vw, 2.6rem) var(--fonte-titulo); color: var(--tinta); border-bottom: 1px solid color-mix(in srgb, var(--ouro) 60%, transparent); padding-bottom: 6px; text-wrap: balance; }
+.cert-habilidades { text-align: left; margin: 8px auto 0; max-width: 700px; }
+.cert-subtitulo { margin: 0 0 4px; font-weight: 700; color: var(--ouro); text-align: center; }
+.cert-habilidades ul { columns: 2 260px; margin: 0; padding-left: 1.1em; font-size: .92rem; line-height: 1.5; }
+.cert-rodape { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-top: 14px; }
+.cert-rodape > div { display: grid; gap: 2px; text-align: left; }
+.cert-linha { display: block; width: 180px; border-top: 1px solid var(--tinta); margin-bottom: 4px; }
+.cert-rodape small { color: #5B5780; font-size: .78rem; }
+.cert-codigo { text-align: right !important; }
+.cert-codigo b { font-family: var(--fonte-codigo); letter-spacing: .08em; }
+.cert-aviso { margin: 8px 0 0; font-size: .72rem; color: #6B678F; }
+.cert-verificado { text-align: center; color: var(--texto-2); margin: 16px auto; max-width: 700px; }
+@media print {
+  @page { size: A4 landscape; margin: 10mm; }
+  html, body.pub-cert { background: #fff !important; background-image: none !important; }
+  .pub-cert .pub-topo, .pub-cert .pub-rodape, .pub-cert .nao-imprimir, .pub-cert #toasts, .pub-cert .consentimento { display: none !important; }
+  .pub-cert .pub-main { padding: 0; margin: 0; max-width: none; }
+  .certificado { box-shadow: none; max-width: none; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* Prova final */
+.prova-intro, .prova-res { max-width: 640px; margin: 0 auto; display: grid; gap: 12px; }
+.prova-regras { margin: 0; padding-left: 1.2em; color: var(--texto-2); }
+.prova-regras li { margin: 4px 0; }
+.cartao-prova { margin-top: 18px; padding: 16px; border-radius: var(--raio); border: 2px solid var(--cor); background: var(--noite-2); display: grid; gap: 8px; text-align: center; justify-items: center; }
+.cartao-prova h2 { margin: 0; }
+.cartao-prova p { margin: 0; color: var(--texto-2); }
+.gabarito { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.gabarito li { background: var(--noite-2); border: 1px solid var(--linha); border-left: 4px solid var(--erro); border-radius: 10px; padding: 10px 12px; }
+.gabarito li.ok { border-left-color: var(--certo); }
+.gabarito small { color: var(--texto-3); }
+.lista-certs { display: grid; gap: 8px; }
+.item-cert { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; background: var(--noite-2); border: 1px solid var(--linha); color: var(--texto); text-decoration: none; }
+.item-cert span:first-child { font-size: 1.6rem; }
+.item-cert small { display: block; color: var(--texto-3); }

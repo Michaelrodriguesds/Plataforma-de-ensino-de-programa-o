@@ -10,6 +10,24 @@ Formato: **MAIOR.MENOR.CORREÇÃO**
 
 ---
 
+## [1.4.0] — 2026-11-02 — Prova final e certificado
+
+- **Prova final em cada trilha** (`#/prova/:trilha`), liberada ao concluir todas as fases:
+  - 15 perguntas sorteadas das fases (perguntas e "prever"), sem dicas, diferentes a cada tentativa;
+  - aprovação com **70%**; até **3 tentativas por dia**;
+  - as perguntas vão "assinadas" (JWT) e a correção é feita no servidor;
+  - no fim, a lista do que errou, com a resposta certa e o link para rever a fase.
+- **Certificado de conclusão ilustrativo** (sem reconhecimento do MEC), emitido após passar:
+  - nome completo escolhido pela pessoa, trilha, número de fases, **carga horária estimada**, **habilidades trabalhadas**, nota da prova, data e **código de verificação** (ex: `CQ-AS6R-MK68`);
+  - página pública `/certificado/CÓDIGO` para conferir, **imprimir ou salvar em PDF** (A4 deitado), **adicionar ao LinkedIn** e compartilhar no WhatsApp (sem anúncios e fora do Google, com `noindex`).
+- Carga horária calculada pelo conteúdo (`cargaHoraria` em `src/jogo.js`): Python 26 h, JavaScript 29 h, Java 23 h, HTML e CSS 16 h, React 10 h, Back-end 13 h, SQL 14 h, Git 10 h.
+- Campo `habilidades` em cada trilha (usado no certificado).
+- O certificado aparece na trilha, no cartão do início, no perfil ("Certificados") e no fim da última fase.
+- Painel: certificados emitidos e quantas pessoas têm certificado.
+- Textos atualizados: perguntas frequentes, Sobre e Termos de uso (certificado ilustrativo; pode ser cancelado se obtido com fraude).
+
+---
+
 ## [1.3.1] — 2026-11-02 — Sugestões, "online agora" e Render sem Docker
 
 - **Tela 💬 Sugestões** (`#/sugestao`), que funciona com ou sem conta: tipo (ideia, pedido de aula, problema, elogio), nota de 1 a 5 estrelas e contato opcional para resposta. Links no início do app, no perfil, no fim de cada fase e no rodapé do site. Rota `POST /api/sugestao`.

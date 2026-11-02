@@ -215,6 +215,7 @@
     if (rota === 'perfil') return telaPerfil();
     if (rota === 'lab' && CURSOS[partes[1]]) return telaLab(partes[1]);
     if (rota === 'sugestao') return telaSugestao();
+    if (rota === 'prova' && CURSOS[partes[1]]) return telaProva(partes[1]);
     if (rota === 'admin') return telaAdmin();
     ir('#/');
   }
@@ -316,7 +317,7 @@
       '<div class="barra" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100" aria-label="Progresso em ' + esc(c.nome) + '"><i style="width:' + pct + '%"></i></div>' +
       '<p class="cc-status">' + p.feitas + ' de ' + p.total + ' fases' + (p.proxima ? ' · próxima: <b>' + esc(p.proxima.titulo) + '</b>' : ' · trilha completa 🎓') + '</p>' +
       '<div class="cc-acoes">' +
-      (p.proxima ? '<a class="btn" href="#/fase/' + p.proxima.id + '">' + (p.feitas ? 'Continuar' : 'Começar') + '</a>' : '') +
+      (p.proxima ? '<a class="btn" href="#/fase/' + p.proxima.id + '">' + (p.feitas ? 'Continuar' : 'Começar') + '</a>' : (certificadoDe(cid) ? '<a class="btn" href="/certificado/' + certificadoDe(cid).codigo + '">🎓 Ver certificado</a>' : '<a class="btn" href="#/prova/' + cid + '">🎓 Prova final</a>')) +
       '<a class="btn btn-sec" href="#/trilha/' + cid + '">Ver trilha</a>' +
       '<a class="btn btn-sec" href="#/lab/' + cid + '" title="Laboratório: escreva e rode código livre">🧪 Lab</a>' +
       '</div></article>';
@@ -366,6 +367,7 @@
       contador += m.fases.length;
       if (mi === 1) html += '<div class="anuncio-slot"></div>';
     });
+    html += cartaoProva(cid);
     tela(html, 'trilha');
     var atual = $app.querySelector('.no.atual');
     if (atual) setTimeout(function () { atual.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 150);
@@ -788,7 +790,7 @@
       (r.ofensivaSubiu ? '<p class="res-fogo">🔥 Ofensiva: ' + estado.usuario.ofensiva + ' dia' + (estado.usuario.ofensiva > 1 ? 's' : '') + ' seguido' + (estado.usuario.ofensiva > 1 ? 's' : '') + '!</p>' : '') +
       conquistasHtml(r.conquistas) +
       '<div class="res-acoes">' +
-      (prox ? '<a class="btn btn-grande" href="#/fase/' + prox + '">Próxima: ' + esc(FASES[prox].fase.titulo) + '</a>' : '<a class="btn btn-grande" href="#/trilha/' + info.curso.id + '">Trilha completa! 🎓</a>') +
+      (prox ? '<a class="btn btn-grande" href="#/fase/' + prox + '">Próxima: ' + esc(FASES[prox].fase.titulo) + '</a>' : (progressoCurso(info.curso.id).proxima ? '<a class="btn btn-grande" href="#/trilha/' + info.curso.id + '">Ver trilha</a>' : '<a class="btn btn-grande" href="#/prova/' + info.curso.id + '">🎓 Trilha completa! Fazer a prova final</a>')) +
       '<a class="btn btn-sec" href="#/trilha/' + info.curso.id + '">Ver trilha</a></div>' +
       '<p class="res-sugestao"><a href="#/sugestao">💬 O que achou desta fase? Mande uma sugestão</a></p>' +
       '<div class="anuncio-slot"></div>' +
@@ -887,6 +889,7 @@
         var est = fasesDoCurso(cid).reduce(function (t, f) { return t + (feita(f.id) ? u.fases[f.id].estrelas : 0); }, 0);
         return '<a href="#/trilha/' + cid + '" style="--cor:' + c.cor + '"><span>' + c.icone + '</span><b>' + esc(c.nome) + '</b><small>' + p.feitas + '/' + p.total + ' fases · ' + est + '★</small><div class="barra"><i style="width:' + Math.round(p.feitas / p.total * 100) + '%"></i></div></a>';
       }).join('') + '</div>' +
+      '<h2 class="titulo-secao">Certificados</h2>' + listaCertificados() +
       '<h2 class="titulo-secao">Conquistas</h2><div class="conquistas">' + conquistas.map(function (c) {
         var tem = u.conquistas.indexOf(c.id) >= 0;
         return '<div class="conquista ' + (tem ? 'on' : '') + '"><span>' + (tem ? c.icone : '🔒') + '</span><b>' + esc(c.nome) + '</b><small>' + esc(c.desc) + '</small></div>';
@@ -923,6 +926,131 @@
         E.aviso('Conta excluída. Obrigado por ter estudado com a gente 💜', 'ok');
         ir('#/cadastro');
       } catch (err) { e.target.querySelector('.erro-form').textContent = err.message; }
+    };
+  }
+
+  // =============================================================
+  // PROVA FINAL E CERTIFICADO (#/prova/python)
+  // =============================================================
+  function certificadoDe(cid) { return estado.usuario && estado.usuario.certificados ? estado.usuario.certificados[cid] || null : null; }
+  function cartaoProva(cid) {
+    var c = CURSOS[cid], p = progressoCurso(cid), cert = certificadoDe(cid);
+    if (cert) return '<section class="cartao-prova" style="--cor:' + c.cor + '"><span class="ico-grande">🎓</span><h2>Trilha concluída!</h2><p>Você foi aprovado(a) na prova final com ' + cert.nota + '%.</p><a class="btn" href="/certificado/' + cert.codigo + '">Ver meu certificado</a><a class="btn btn-sec" href="#/prova/' + cid + '">Refazer a prova</a></section>';
+    if (!p.proxima) return '<section class="cartao-prova" style="--cor:' + c.cor + '"><span class="ico-grande">🎓</span><h2>Prova final liberada!</h2><p>Passe com 70% e ganhe o certificado de ' + esc(c.nome) + '.</p><a class="btn btn-grande" href="#/prova/' + cid + '">Fazer a prova</a></section>';
+    return '<section class="cartao-prova" style="--cor:' + c.cor + '"><span class="ico-grande">🔒</span><h2>Prova final e certificado</h2><p>Conclua as ' + (p.total - p.feitas) + ' fases que faltam para liberar a prova e ganhar o certificado de ' + esc(c.nome) + '.</p></section>';
+  }
+  function listaCertificados() {
+    var lista = ORDEM.filter(function (cid) { return certificadoDe(cid); });
+    var faltando = ORDEM.filter(function (cid) { return !certificadoDe(cid) && !progressoCurso(cid).proxima; });
+    if (!lista.length && !faltando.length) return '<p class="nota">Conclua todas as fases de uma trilha e passe na prova final para ganhar o certificado dela.</p>';
+    return '<div class="lista-certs">' + lista.map(function (cid) {
+      var cert = certificadoDe(cid);
+      return '<a class="item-cert" href="/certificado/' + cert.codigo + '"><span>' + CURSOS[cid].icone + '</span><span><b>' + esc(CURSOS[cid].nome) + '</b><small>' + cert.horas + ' horas · nota ' + cert.nota + '% · ' + esc(cert.codigo) + '</small></span></a>';
+    }).join('') + faltando.map(function (cid) {
+      return '<a class="item-cert" href="#/prova/' + cid + '"><span>' + CURSOS[cid].icone + '</span><span><b>' + esc(CURSOS[cid].nome) + '</b><small>Trilha concluída: faça a prova final</small></span></a>';
+    }).join('') + '</div>';
+  }
+
+  async function telaProva(cid) {
+    var c = CURSOS[cid];
+    tela('<section class="prova-intro" style="--cor:' + c.cor + '"><div class="carregando"><div class="spinner"></div></div></section>', 'prova-tela');
+    var st;
+    try { st = await api('GET', '/prova/' + cid); } catch (e) { $app.querySelector('.prova-intro').innerHTML = '<p>' + esc(e.message) + '</p>'; return; }
+    var box = $app.querySelector('.prova-intro');
+    var cert = st.certificado;
+    box.innerHTML = '<div class="trilha-cab"><a href="#/trilha/' + cid + '" class="voltar" aria-label="Voltar">‹</a><span class="cc-icone">' + c.icone + '</span><div><h1>Prova final de ' + esc(c.nome) + '</h1><p>Carga horária estimada da trilha: ' + st.horas + ' horas</p></div></div>' +
+      (!st.liberada ? '<p class="nota">🔒 Conclua todas as fases da trilha para liberar a prova. Faltam <b>' + st.faltam + '</b>.</p><a class="btn" href="#/trilha/' + cid + '">Voltar à trilha</a>' :
+        '<ul class="prova-regras">' +
+        '<li><b>' + st.questoes + ' perguntas</b> sorteadas de toda a trilha (cada tentativa é diferente)</li>' +
+        '<li>Sem dicas e sem ver a resposta durante a prova</li>' +
+        '<li>Para passar: <b>' + Math.round(st.minimo * 100) + '%</b> de acertos</li>' +
+        '<li>Até 3 tentativas por dia (restam <b>' + st.restantesHoje + '</b> hoje)</li>' +
+        '<li>Os desafios de código das fases (inclusive os chefões) já foram a parte prática: esta prova confere a teoria</li></ul>' +
+        (st.melhor ? '<p class="nota">Sua melhor nota até agora: <b>' + st.melhor + '%</b>.</p>' : '') +
+        (cert ? '<p class="nota">✔ Você já tem o certificado. Refazer a prova pode melhorar a nota que aparece nele.</p><a class="btn btn-sec" href="/certificado/' + cert.codigo + '">Ver meu certificado</a>' : '') +
+        (st.aprovado && !cert ? '<p class="nota">✔ Você já passou! Falta só emitir o certificado.</p><button class="btn btn-grande b-emitir">🎓 Emitir certificado</button>' : '') +
+        (st.restantesHoje > 0 ? '<button class="btn btn-grande b-comecar">Começar a prova</button>' : '<p class="nota">Você usou as tentativas de hoje. Aproveite para revisar as fases e volte amanhã!</p>') +
+        '<p class="nota">O certificado é ilustrativo: o CodeQuest não é reconhecido pelo MEC. Ele mostra o que você estudou, a carga horária e as habilidades da trilha.</p>');
+    var bc = box.querySelector('.b-comecar');
+    if (bc) bc.onclick = function () { comecarProva(cid); };
+    var be = box.querySelector('.b-emitir');
+    if (be) be.onclick = function () { telaEmitir(cid); };
+  }
+
+  async function comecarProva(cid) {
+    var c = CURSOS[cid];
+    var dados;
+    try { dados = await api('POST', '/prova/' + cid + '/iniciar'); } catch (e) { E.aviso(esc(e.message), 'erro'); return; }
+    var respostas = [], i = 0;
+    function mostrar() {
+      var id = dados.ids[i], partes = id.split(':'), info = FASES[partes[0]], ex = info.fase.ex[Number(partes[1])];
+      var p = { ex: ex, info: info };
+      var ordem = embaralhar(ex.op.map(function (_, k) { return k; }));
+      $app.querySelector('main').innerHTML = '<section class="prova-intro" style="--cor:' + c.cor + '">' +
+        '<div class="jogo-barra" role="progressbar" aria-label="Progresso da prova"><i style="width:' + Math.round(i / dados.ids.length * 100) + '%"></i></div>' +
+        '<p class="nota">Pergunta ' + (i + 1) + ' de ' + dados.ids.length + ' · ' + esc(info.fase.titulo) + '</p>' +
+        '<article class="exercicio"><h1>' + (ex.tipo === 'prever' ? (ex.p || 'O que aparece na tela?') : ex.p) + '</h1>' +
+        blocoContexto(c.ling, contexto(p, null)) +
+        (ex.codigo ? codigoHtml(ex.codigo, c.ling) : '') +
+        (ex.entrada ? '<p class="entrada-info">Entrada digitada: <code>' + esc(ex.entrada).replace(/\n/g, ' ⏎ ') + '</code></p>' : '') +
+        '<div class="opcoes" role="radiogroup">' + ordem.map(function (k) {
+          return '<button class="opcao" role="radio" aria-checked="false" data-i="' + k + '">' + (ex.tipo === 'prever' ? '<pre>' + esc(ex.op[k]) + '</pre>' : esc(ex.op[k])) + '</button>';
+        }).join('') + '</div></article>' +
+        '<button class="btn btn-grande b-prox" disabled>' + (i === dados.ids.length - 1 ? 'Entregar a prova' : 'Próxima') + '</button></section>';
+      hidratarBancos($app);
+      window.scrollTo(0, 0);
+      var escolhido = null, bp = $app.querySelector('.b-prox');
+      $app.querySelectorAll('.opcao').forEach(function (b) {
+        b.onclick = function () {
+          $app.querySelectorAll('.opcao').forEach(function (x) { x.classList.remove('sel'); x.setAttribute('aria-checked', 'false'); });
+          b.classList.add('sel'); b.setAttribute('aria-checked', 'true');
+          escolhido = Number(b.dataset.i); bp.disabled = false;
+        };
+      });
+      bp.onclick = function () {
+        respostas[i] = escolhido;
+        i++;
+        if (i < dados.ids.length) mostrar(); else entregar();
+      };
+    }
+    async function entregar() {
+      $app.querySelector('main').innerHTML = '<div class="carregando"><div class="spinner"></div><p>Corrigindo...</p></div>';
+      var r;
+      try { r = await api('POST', '/prova/' + cid + '/enviar', { token: dados.token, respostas: respostas }); }
+      catch (e) { $app.querySelector('main').innerHTML = '<div class="carregando"><p>' + esc(e.message) + '</p><a class="btn" href="#/prova/' + cid + '">Voltar</a></div>'; return; }
+      estado.usuario = r.usuario;
+      var erradas = r.gabarito.filter(function (g) { return !g.acertou; });
+      $app.querySelector('main').innerHTML = '<section class="prova-res resultado" style="--cor:' + c.cor + '">' +
+        '<p class="res-sobre">Prova final · ' + esc(c.nome) + '</p>' +
+        '<h1>' + (r.aprovado ? 'Aprovado(a)! 🎉' : 'Quase lá!') + '</h1>' +
+        '<div class="res-numeros"><div><b>' + r.nota + '%</b><span>de acertos</span></div><div><b>' + r.acertos + '/' + r.total + '</b><span>perguntas</span></div><div><b>' + r.minimo + '%</b><span>para passar</span></div></div>' +
+        (r.aprovado ? '<button class="btn btn-grande b-emitir">🎓 Emitir meu certificado</button>' : '<p class="res-dica">Revise as fases das perguntas abaixo e tente de novo. Cada tentativa sorteia perguntas diferentes.</p><a class="btn btn-grande" href="#/prova/' + cid + '">Tentar de novo</a>') +
+        (erradas.length ? '<h2 class="titulo-secao">Para revisar</h2><ul class="gabarito">' + erradas.map(function (g) {
+          var pt = g.id.split(':'), inf = FASES[pt[0]], ex = inf.fase.ex[Number(pt[1])];
+          return '<li><b>' + esc(inf.fase.titulo) + '</b><br>' + (ex.tipo === 'prever' ? (ex.p || 'O que aparece na tela?') : ex.p) + '<br><small>Resposta certa:</small> <code>' + esc(ex.op[ex.c]).replace(/\n/g, ' ⏎ ') + '</code><br><small>' + esc(ex.exp || '') + '</small><br><a href="#/fase/' + pt[0] + '">Rever a fase</a></li>';
+        }).join('') + '</ul>' : '') +
+        '</section>';
+      if (r.aprovado) { E.sons.fase(); E.comemorar(); }
+      var be = $app.querySelector('.b-emitir');
+      if (be) be.onclick = function () { telaEmitir(cid); };
+    }
+    mostrar();
+  }
+
+  function telaEmitir(cid) {
+    var c = CURSOS[cid], u = estado.usuario;
+    $app.querySelector('main').innerHTML = '<section class="prova-intro" style="--cor:' + c.cor + '"><h1>🎓 Seu certificado de ' + esc(c.nome) + '</h1>' +
+      '<form class="form-sugestao f-emitir"><label>Nome completo que vai aparecer no certificado<input name="nome" maxlength="80" required value="' + esc((certificadoDe(cid) || {}).nome || u.nome) + '"></label>' +
+      '<p class="nota">Confira com calma: escreva como quer que apareça (ex: Michael Rodrigues dos Santos).</p>' +
+      '<p class="erro-form" role="alert"></p><button class="btn btn-grande" type="submit">Gerar certificado</button></form></section>';
+    var f = $app.querySelector('.f-emitir');
+    f.onsubmit = async function (e) {
+      e.preventDefault();
+      try {
+        var r = await api('POST', '/certificados/' + cid, { nome: f.nome.value });
+        estado.usuario = r.usuario;
+        location.href = r.url;
+      } catch (err) { f.querySelector('.erro-form').textContent = err.message; }
     };
   }
 
@@ -1076,6 +1204,7 @@
       tile('Retorno em 7 dias', pct(d.retorno.voltaram, d.retorno.coorte), fmt(d.retorno.voltaram) + ' de ' + fmt(d.retorno.coorte) + ' que entraram há 8–30 dias voltaram esta semana') +
       tile('Com ofensiva viva', fmt(T.comOfensiva), 'estudaram hoje ou ontem') +
       tile('Nunca jogaram', fmt(T.nuncaJogaram), 'criaram conta e não concluíram nenhuma fase') +
+      tile('🎓 Certificados emitidos', fmt(T.certificados || 0), fmt(T.comCertificado || 0) + ' pessoa(s) com certificado', 'Quem concluiu uma trilha inteira e passou na prova final') +
       '</div>' +
       '<h2 class="titulo-secao">Últimos 30 dias</h2><div class="grafico-box"><div class="legenda">' +
       SERIES.map(function (sr) { return '<span><i style="background:' + sr.cor + '"></i>' + sr.nome + '</span>'; }).join('') +

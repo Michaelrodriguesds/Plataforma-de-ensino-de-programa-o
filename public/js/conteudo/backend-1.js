@@ -16,6 +16,8 @@ app.use(express.json());
 `;
   C.backend = {
     id: 'backend', nome: 'Back-end com Node.js', icone: '🟩', cor: '#7BC86C', ling: 'node',
+    // usadas no certificado de conclusão
+    habilidades: ['Protocolo HTTP: métodos, status e cabeçalhos', 'Servidores com Node.js e Express', 'APIs REST: rotas, parâmetros, query e corpo JSON', 'Validação de dados e tratamento de erros', 'Middlewares, routers, variáveis de ambiente e CORS', 'Banco de dados MongoDB', 'Segurança: senhas com bcrypt e autenticação com JWT'],
     desc: 'O lado do servidor: APIs com Express, rotas, banco MongoDB, senhas e login com JWT.',
     mundos: [
       // ===================================================== MUNDO 1

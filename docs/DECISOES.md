@@ -75,3 +75,11 @@ O sql.js (`public/js/runtime/sql/`) e o `reactlib.js` ficam no repositório, ger
 - HTML: o teste é JavaScript e usa ferramentas com nomes em português (`texto`, `existe`, `estilo`...), para o aluno conseguir ler o teste.
 - Terminal: só a saída dos comandos de teste é comparada (a marca `#__TESTE__` separa), porque cada aluno pode chegar ao mesmo resultado com comandos diferentes. O campo `pasta` monta o cenário antes.
 - Node e React: o teste usa `fetch` (back-end) e `clicar`/`digitar` (React), como uma pessoa usando o sistema.
+
+### D17 — Certificado ilustrativo com prova (muda o D8)
+Pedido do dono: depois de lançado "sem certificado", passou a querer um certificado **ilustrativo** por trilha, só para a pessoa ter a carga horária e as habilidades.
+- Para o certificado ter valor de conquista, ele exige **as duas coisas**: concluir todas as fases (inclusive os desafios de código e os chefões, que são a parte prática) e passar numa **prova teórica** (15 perguntas sorteadas, 70%).
+- 3 tentativas por dia para evitar "chutar até passar"; cada tentativa sorteia perguntas novas.
+- O texto deixa claro que **não é reconhecido pelo MEC** (no certificado, nas perguntas frequentes e nos Termos).
+- A página do certificado é pública só para quem tem o link (código difícil de adivinhar) e tem `noindex`, para o nome da pessoa não ir para o Google.
+- Os certificados ficam dentro do documento do usuário (`certificados` e `codigosCert`): se a conta for excluída, os certificados somem junto (LGPD).

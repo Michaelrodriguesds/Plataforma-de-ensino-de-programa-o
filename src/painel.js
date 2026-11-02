@@ -56,7 +56,9 @@ async function montarPainel(store, cursos) {
       cadastros7: usuarios.filter(u => idade(u) < 7).length,
       cadastros30: usuarios.filter(u => idade(u) < 30).length,
       comOfensiva: usuarios.filter(u => u.ultimoDia && jogo.diasEntre(u.ultimoDia, hoje) <= 1 && u.ofensiva > 0).length,
-      nuncaJogaram: usuarios.filter(u => u.fases.length === 0).length
+      nuncaJogaram: usuarios.filter(u => u.fases.length === 0).length,
+      certificados: usuarios.reduce((t, u) => t + (u.certificados || 0), 0),
+      comCertificado: usuarios.filter(u => u.certificados > 0).length
     },
     periodos: {
       hoje: { visitantes: uHoje.visitantes, ativos: uHoje.ativos, estudaram: uHoje.estudaram, visualizacoes: soma([hoje], 'visualizacoes'), fases: soma([hoje], 'fases'), visitantesNovos: soma([hoje], 'visitantesNovos') },

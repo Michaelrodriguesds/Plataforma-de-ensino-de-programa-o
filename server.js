@@ -251,6 +251,80 @@ app.post('/api/feedback', exigirLogin, limiteFeedback, ok(async (req, res) => {
   res.json({ ok: true });
 }));
 
+// ---------- Prova final e certificado ----------
+// Regras em src/jogo.js (PROVA). O certificado é ilustrativo: não é reconhecido pelo MEC.
+const limiteProva = rateLimit({ windowMs: 60 * 1000, limit: 20, message: { erro: 'Muitas tentativas. Espere um minutinho.' } });
+function cursoDaRota(req, res) {
+  const c = CURSOS[req.params.curso];
+  if (!c) { res.status(404).json({ erro: 'Trilha não encontrada.' }); return null; }
+  return c;
+}
+app.get('/api/prova/:curso', exigirLogin, ok(async (req, res) => {
+  const c = cursoDaRota(req, res); if (!c) return;
+  const u = await store.buscarPorId(req.usuarioId);
+  res.json(jogo.situacaoProva(u, c));
+}));
+app.post('/api/prova/:curso/iniciar', exigirLogin, limiteProva, ok(async (req, res) => {
+  const c = cursoDaRota(req, res); if (!c) return;
+  const u = await store.buscarPorId(req.usuarioId);
+  const st = jogo.situacaoProva(u, c);
+  if (!st.liberada) return res.status(403).json({ erro: `Conclua todas as fases da trilha para liberar a prova (faltam ${st.faltam}).` });
+  if (st.restantesHoje <= 0) return res.status(429).json({ erro: `Você já usou as ${jogo.PROVA.tentativasPorDia} tentativas de hoje. Revise as fases e tente amanhã!` });
+  const ids = jogo.sortear(jogo.bancoProva(c), jogo.PROVA.questoes);
+  u.provas = u.provas || {};
+  const p = u.provas[c.id] = u.provas[c.id] || { tentativas: [] };
+  p.tentativas.push({ dia: jogo.hojeStr(), em: new Date().toISOString(), nota: null });
+  p.tentativas = p.tentativas.slice(-30);
+  await store.salvar(u);
+  // As perguntas sorteadas vão "assinadas": na correção, o servidor confere que são as mesmas
+  const token = jwt.sign({ uid: u._id, curso: c.id, ids }, SEGREDO, { expiresIn: '3h' });
+  res.json({ ids, token, minimo: jogo.PROVA.minimo });
+}));
+app.post('/api/prova/:curso/enviar', exigirLogin, limiteProva, ok(async (req, res) => {
+  const c = cursoDaRota(req, res); if (!c) return;
+  let dados;
+  try { dados = jwt.verify(String((req.body || {}).token || ''), SEGREDO); } catch { return res.status(400).json({ erro: 'Prova vencida ou inválida. Comece de novo.' }); }
+  if (dados.uid !== req.usuarioId || dados.curso !== c.id) return res.status(400).json({ erro: 'Prova inválida.' });
+  const respostas = Array.isArray(req.body.respostas) ? req.body.respostas : [];
+  const gabarito = dados.ids.map((id, i) => {
+    const ex = jogo.exercicioPorId(c, id);
+    return { id, certa: ex ? ex.c : null, marcada: Number.isInteger(respostas[i]) ? respostas[i] : null, acertou: !!ex && respostas[i] === ex.c };
+  });
+  const acertos = gabarito.filter(g => g.acertou).length;
+  const nota = Math.round(acertos / gabarito.length * 100);
+  const aprovado = acertos / gabarito.length >= jogo.PROVA.minimo;
+  const u = await store.buscarPorId(req.usuarioId);
+  const p = (u.provas = u.provas || {})[c.id] = (u.provas[c.id] || { tentativas: [] });
+  const ultima = [...p.tentativas].reverse().find(t => t.nota === null);
+  if (ultima) ultima.nota = nota;
+  p.melhor = Math.max(p.melhor || 0, nota);
+  if (aprovado && !p.aprovado) p.aprovado = { nota, em: new Date().toISOString() };
+  // se já tem certificado e melhorou a nota, o certificado mostra a melhor
+  if (u.certificados && u.certificados[c.id]) u.certificados[c.id].nota = p.melhor;
+  await store.salvar(u);
+  res.json({ acertos, total: gabarito.length, nota, aprovado, minimo: Math.round(jogo.PROVA.minimo * 100), gabarito, usuario: jogo.usuarioPublico(u) });
+}));
+app.post('/api/certificados/:curso', exigirLogin, ok(async (req, res) => {
+  const c = cursoDaRota(req, res); if (!c) return;
+  const u = await store.buscarPorId(req.usuarioId);
+  const p = (u.provas || {})[c.id];
+  if (!p || !p.aprovado) return res.status(403).json({ erro: 'Passe na prova final para emitir o certificado.' });
+  const nome = String((req.body || {}).nome || u.nome).replace(/\s+/g, ' ').trim().slice(0, 80);
+  if (nome.length < 3) return res.status(400).json({ erro: 'Escreva seu nome completo.' });
+  if (nomeProibido(nome)) return res.status(400).json({ erro: 'Escolha outro nome.' });
+  u.certificados = u.certificados || {};
+  const antigo = u.certificados[c.id];
+  const cert = {
+    codigo: antigo ? antigo.codigo : jogo.gerarCodigoCertificado(),
+    curso: c.id, nome, nota: p.melhor, horas: jogo.cargaHoraria(c),
+    em: antigo ? antigo.em : new Date().toISOString()
+  };
+  u.certificados[c.id] = cert;
+  u.codigosCert = Array.from(new Set([...(u.codigosCert || []), cert.codigo]));
+  await store.salvar(u);
+  res.json({ certificado: cert, url: '/certificado/' + cert.codigo, usuario: jogo.usuarioPublico(u) });
+}));
+
 // ---------- Sugestões, pedidos e elogios (com ou sem conta) ----------
 const TIPOS_SUGESTAO = ['sugestao', 'conteudo', 'problema', 'elogio'];
 app.post('/api/sugestao', limiteFeedback, ok(async (req, res) => {
@@ -324,6 +398,13 @@ app.get('/aprender/:curso/:fase', (req, res) => html(res, paginas.licao(req, req
 app.get('/sobre', (req, res) => html(res, paginas.sobre(req)));
 app.get('/privacidade', (req, res) => html(res, paginas.privacidade(req)));
 app.get('/termos', (req, res) => html(res, paginas.termos(req)));
+// Página pública do certificado (para imprimir, salvar em PDF e conferir pelo código)
+app.get('/certificado/:codigo', ok(async (req, res) => {
+  const codigo = String(req.params.codigo).toUpperCase();
+  const u = /^CQ-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(codigo) ? await store.buscarPorCertificado(codigo) : null;
+  const cert = u && Object.values(u.certificados || {}).find(x => x.codigo === codigo);
+  html(res, cert && CURSOS[cert.curso] ? paginas.certificado(req, cert, CURSOS[cert.curso]) : null);
+}));
 
 // ---------- Aplicativo (/app) ----------
 // Entregamos o index.html com as configurações de anúncio já embutidas
