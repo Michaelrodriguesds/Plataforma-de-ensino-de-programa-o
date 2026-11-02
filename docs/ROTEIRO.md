@@ -12,6 +12,9 @@ Ideias organizadas por prioridade. Ao começar uma, mova para "Em andamento". Ao
 - 🟢 **Compartilhar conquista:** botão para compartilhar no WhatsApp/Instagram a fase concluída ou a ofensiva, com link para a aula. Divulgação gratuita.
 - 🟡 **Página pública de perfil/ranking:** `/ranking` aberto, para divulgar nas redes e motivar a competição.
 
+- 🟢 **Content-Security-Policy** listando só os domínios do AdSense, Analytics, Pyodide e Google Fonts (ver `docs/REVISAO.md`).
+- 🟡 **Carregar o conteúdo sob demanda** (só a trilha aberta), se o número de trilhas crescer.
+
 ## Prioridade média (qualidade do ensino)
 
 - 🔴 **Mais trilhas:** TypeScript, Python para dados (pandas no Pyodide), testes automatizados (Jest/Vitest), Docker. (HTML e CSS, SQL, React, Back-end e Git: feitos na 1.3.0.)
@@ -29,7 +32,7 @@ Ideias organizadas por prioridade. Ao começar uma, mova para "Em andamento". Ao
 - 🟡 **Ligas semanais por divisão** (Bronze, Prata, Ouro), como no Duolingo, em vez de um único ranking.
 - 🟡 **Apoio voluntário:** página "Apoie com PIX" para quem quiser contribuir além dos anúncios.
 - 🔴 **Aplicativo nas lojas:** empacotar o PWA para a Play Store (TWA) e usar AdMob.
-- 🟢 **Testes automáticos da interface:** guardar no projeto os scripts de teste com navegador, que hoje só foram usados durante o desenvolvimento.
+- 🟢 **Testes automáticos da interface:** guardar no projeto os scripts de teste com navegador (puppeteer). Os testes de regras e da API já estão em `npm test` (1.4.1).
 
 ## Em andamento
 

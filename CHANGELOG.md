@@ -10,6 +10,18 @@ Formato: **MAIOR.MENOR.CORREÇÃO**
 
 ---
 
+## [1.4.1] — 2026-11-02 — Revisão geral, testes automáticos e correções
+
+Tudo detalhado em `docs/REVISAO.md`.
+- **Testes automáticos:** `npm test` (19 testes: regras, motores de código e a API inteira num servidor de teste) e `npm run testar:tudo` (testes + validador). GitHub Actions roda tudo a cada push (`.github/workflows/testes.yml`).
+- **Segurança:** prova não pode ser reenviada; trocar senha (nova tela no perfil) e senha provisória derrubam logins antigos; bloqueio de `\uXXXX` no Java; avatar sem HTML; fim do XP infinito em fases repetidas e do bônus vazio da revisão; contas excluídas não geram erro 500; senha errada não desloga mais.
+- **Desempenho:** respostas compactadas (gzip); service worker não baixa mais os arquivos grandes de cara.
+- **MongoDB:** painel com consultas compatíveis, índice TTL opcional, limite de 2.000 mensagens; testado com servidor compatível com MongoDB.
+- Limites de fases, Java e prova contados **por aluno** (não por IP: turma de escola usa o mesmo IP); aviso de "muitas execuções" explicado.
+- `Referrer-Policy` ajustada para o AdSense/Analytics; `compression` 1.8.2; `ARQUIVO_DADOS` (arquivo de dados alternativo, usado nos testes).
+
+---
+
 ## [1.4.0] — 2026-11-02 — Prova final e certificado
 
 - **Prova final em cada trilha** (`#/prova/:trilha`), liberada ao concluir todas as fases:

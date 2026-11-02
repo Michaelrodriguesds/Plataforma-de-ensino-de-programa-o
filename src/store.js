@@ -194,8 +194,11 @@ class MongoStore {
     await this.vids.createIndex({ primeiro: 1 });
     await this.udia.createIndex({ dia: 1 });
     // apaga sozinho registros diários com mais de 400 dias (TTL)
-    await this.visit.createIndex({ em: 1 }, { expireAfterSeconds: DIAS_GUARDADOS * 86400 });
-    await this.udia.createIndex({ em: 1 }, { expireAfterSeconds: DIAS_GUARDADOS * 86400 });
+    // (se o banco não aceitar índices TTL, o site funciona igual: só não apaga os antigos sozinho)
+    try {
+      await this.visit.createIndex({ em: 1 }, { expireAfterSeconds: DIAS_GUARDADOS * 86400 });
+      await this.udia.createIndex({ em: 1 }, { expireAfterSeconds: DIAS_GUARDADOS * 86400 });
+    } catch (e) { console.warn('⚠️  Índice de limpeza automática não criado:', e.message); }
     console.log('💾 Banco: MongoDB conectado');
   }
   async buscarPorUsuario(usuario) { return this.col.findOne({ usuario }); }
@@ -242,27 +245,30 @@ class MongoStore {
     await Promise.all(ops);
   }
   async metricas(dias) {
-    const [estats, vis, novos, ud] = await Promise.all([
+    const [estats, vis, novos, ud, udEst] = await Promise.all([
       this.estat.find({ _id: { $in: dias } }).toArray(),
       this.visit.aggregate([{ $match: { dia: { $in: dias } } }, { $group: { _id: '$dia', n: { $sum: 1 } } }]).toArray(),
       this.vids.aggregate([{ $match: { primeiro: { $in: dias } } }, { $group: { _id: '$primeiro', n: { $sum: 1 } } }]).toArray(),
-      this.udia.aggregate([{ $match: { dia: { $in: dias } } }, { $group: { _id: '$dia', n: { $sum: 1 }, est: { $sum: { $cond: ['$estudou', 1, 0] } } } }]).toArray()
+      this.udia.aggregate([{ $match: { dia: { $in: dias } } }, { $group: { _id: '$dia', n: { $sum: 1 } } }]).toArray(),
+      this.udia.aggregate([{ $match: { dia: { $in: dias }, estudou: true } }, { $group: { _id: '$dia', n: { $sum: 1 } } }]).toArray()
     ]);
     const mapa = (arr, f) => Object.fromEntries(arr.map(x => [x._id, f(x)]));
-    const E = mapa(estats, x => x), V = mapa(vis, x => x.n), N = mapa(novos, x => x.n), U = mapa(ud, x => x);
+    const E = mapa(estats, x => x), V = mapa(vis, x => x.n), N = mapa(novos, x => x.n), U = mapa(ud, x => x), UE = mapa(udEst, x => x.n);
     const porDia = dias.map(dia => ({
       dia,
       visualizacoes: (E[dia] && E[dia].visualizacoes) || 0,
       visitantes: V[dia] || 0, visitantesNovos: N[dia] || 0,
-      ativos: (U[dia] && U[dia].n) || 0, estudaram: (U[dia] && U[dia].est) || 0,
+      ativos: (U[dia] && U[dia].n) || 0, estudaram: UE[dia] || 0,
       cadastros: (E[dia] && E[dia].cadastros) || 0, fases: (E[dia] && E[dia].fases) || 0, revisoes: (E[dia] && E[dia].revisoes) || 0
     }));
     const unicos = async lista => {
-      const [v, a] = await Promise.all([
+      // (consultas simples, que funcionam em qualquer versão do MongoDB)
+      const [v, a, e] = await Promise.all([
         this.visit.aggregate([{ $match: { dia: { $in: lista } } }, { $group: { _id: '$vid' } }, { $count: 'n' }]).toArray(),
-        this.udia.aggregate([{ $match: { dia: { $in: lista } } }, { $group: { _id: '$uid', est: { $max: '$estudou' } } }]).toArray()
+        this.udia.aggregate([{ $match: { dia: { $in: lista } } }, { $group: { _id: '$uid' } }]).toArray(),
+        this.udia.aggregate([{ $match: { dia: { $in: lista }, estudou: true } }, { $group: { _id: '$uid' } }]).toArray()
       ]);
-      return { visitantes: v[0] ? v[0].n : 0, ativos: a.length, estudaram: a.filter(x => x.est).length, idsAtivos: a.map(x => x._id) };
+      return { visitantes: v[0] ? v[0].n : 0, ativos: a.length, estudaram: e.length, idsAtivos: a.map(x => x._id) };
     };
     const paginas = {}, cursos = {};
     for (const e of estats) {
@@ -277,7 +283,16 @@ class MongoStore {
     await this.col.deleteMany({ usuario: doc.usuario, _id: { $ne: doc._id } });
     await this.col.replaceOne({ _id: doc._id }, doc, { upsert: true });
   }
-  async salvarFeedback(doc) { doc._id = crypto.randomUUID(); await this.fb.insertOne(doc); }
+  async salvarFeedback(doc) {
+    doc._id = crypto.randomUUID();
+    await this.fb.insertOne(doc);
+    // guarda no máximo 2.000 mensagens: apaga as mais antigas (o plano grátis do Atlas tem 512 MB)
+    const total = await this.fb.countDocuments();
+    if (total > 2000) {
+      const velhas = await this.fb.find({}, { projection: { _id: 1 } }).sort({ em: 1 }).limit(total - 2000).toArray();
+      await this.fb.deleteMany({ _id: { $in: velhas.map(v => v._id) } });
+    }
+  }
   async listarFeedback(limite) { return this.fb.find({}).sort({ em: -1 }).limit(limite).toArray(); }
   async excluirFeedback(id) { await this.fb.deleteOne({ _id: id }); }
   async resumoUsuarios() {
@@ -289,7 +304,7 @@ class MongoStore {
 function criarStore() {
   const uri = process.env.MONGODB_URI;
   if (uri) return new MongoStore(uri);
-  return new ArquivoStore(path.join(__dirname, '..', 'data', 'db.json'));
+  return new ArquivoStore(process.env.ARQUIVO_DADOS || path.join(__dirname, '..', 'data', 'db.json'));
 }
 
 module.exports = { criarStore };

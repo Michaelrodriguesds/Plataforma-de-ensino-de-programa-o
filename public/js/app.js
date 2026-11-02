@@ -897,6 +897,11 @@
       '<h2 class="titulo-secao">Ajustes</h2><div class="ajustes">' +
       '<label>Meta diária<select class="sel-meta">' + [10, 20, 30, 50, 80].map(function (m) { return '<option value="' + m + '"' + (m === u.metaDiaria ? ' selected' : '') + '>' + m + ' XP por dia' + (m === 10 ? ' (tranquilo)' : m === 30 ? ' (recomendado)' : m === 80 ? ' (intenso)' : '') + '</option>'; }).join('') + '</select></label>' +
       '<label class="linha-check"><input type="checkbox" class="chk-som"' + (E.somLigado() ? ' checked' : '') + '> Sons de acerto e erro</label>' +
+      '<details class="trocar-senha"><summary>Trocar a senha</summary>' +
+      '<form class="form-senha"><label>Senha atual<input type="password" name="atual" autocomplete="current-password" required></label>' +
+      '<label>Nova senha<input type="password" name="nova" autocomplete="new-password" minlength="6" maxlength="72" required placeholder="mínimo 6 caracteres"></label>' +
+      '<p class="erro-form" role="alert"></p><button class="btn btn-sec" type="submit">Salvar nova senha</button></form>' +
+      '<p class="nota">Recebeu uma senha provisória? Troque aqui por uma que só você sabe. Ao trocar, os outros aparelhos saem da conta.</p></details>' +
       '<button class="btn btn-sec btn-sair">Sair da conta</button></div>' +
       '<h2 class="titulo-secao">Sua opinião</h2><div class="ajustes"><p class="nota">Ideias, pedidos de aulas, problemas ou elogios: tudo chega direto para quem cuida do site.</p><a class="btn btn-sec" href="#/sugestao">💬 Enviar sugestão</a></div>' +
       '<h2 class="titulo-secao">Privacidade</h2><div class="ajustes">' +
@@ -916,6 +921,16 @@
     $app.querySelector('.sel-meta').onchange = async function (e) { await api('PATCH', '/eu', { metaDiaria: Number(e.target.value) }); E.aviso('Meta atualizada ✔'); };
     $app.querySelector('.chk-som').onchange = function (e) { ls('cq_som', e.target.checked ? 'on' : 'off'); };
     $app.querySelector('.btn-sair').onclick = function () { sair(); };
+    $app.querySelector('.form-senha').onsubmit = async function (e) {
+      e.preventDefault();
+      var f = e.target;
+      try {
+        var r = await api('POST', '/eu/senha', { atual: f.atual.value, nova: f.nova.value });
+        ls('cq_token', r.token);
+        f.reset(); f.querySelector('.erro-form').textContent = '';
+        E.aviso('Senha trocada ✔', 'ok');
+      } catch (err) { f.querySelector('.erro-form').textContent = err.message; }
+    };
     $app.querySelector('.btn-cookies').onclick = function () { window.cqConsentimento.reabrir(); };
     $app.querySelector('.form-excluir').onsubmit = async function (e) {
       e.preventDefault();

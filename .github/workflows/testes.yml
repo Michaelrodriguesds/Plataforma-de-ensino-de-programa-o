@@ -1,0 +1,33 @@
+# Roda os testes automaticamente no GitHub a cada push.
+# Se algo quebrar, aparece um ❌ vermelho ao lado do commit no GitHub
+# (e você recebe um e-mail). Grátis para repositórios públicos e com
+# 2.000 minutos por mês nos privados (cada rodada leva uns 5 minutos).
+name: Testes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - name: Testes automáticos (regras, motores e API)
+        run: npm test
+      - name: Todas as respostas de todas as fases
+        run: npm run validar

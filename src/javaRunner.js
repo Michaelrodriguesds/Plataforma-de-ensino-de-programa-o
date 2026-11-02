@@ -44,7 +44,9 @@ const PROIBIDOS = [
   /\bSystem\s*\.\s*(exit|getenv|getProperties|setProperty|load|loadLibrary)\b/,
   /\bjava\.lang\.reflect\b/, /\bClass\s*\.\s*forName\b/, /\bgetDeclared\w*\b/, /\bsetAccessible\b/,
   /\bjava\.lang\.invoke\b/, /\bUnsafe\b/, /\bClassLoader\b/, /\bjavax?\.script\b/, /\bjava\.awt\b/, /\bjavax\.swing\b/,
-  /\bThread\b/, /\bExecutor\w*\b/, /\bnative\s+/
+  /\bThread\b/, /\bExecutor\w*\b/, /\bnative\s+/,
+  // O Java troca \u0052 por "R" ANTES de ler o código: daria para esconder palavras proibidas assim
+  /\\u+[0-9a-fA-F]{4}/
 ];
 
 // Prepara o código: se o aluno escreveu só comandos soltos (fases iniciais),
@@ -133,7 +135,7 @@ async function rodarJava(codigo, entrada = '', deslocamento = 0) {
   const pasta = fs.mkdtempSync(path.join(os.tmpdir(), 'cq-java-'));
   try {
     fs.writeFileSync(path.join(pasta, prep.classe + '.java'), prep.fonte);
-    const comp = await executarProcesso('javac', ['-encoding', 'UTF-8', '-nowarn', prep.classe + '.java'], { cwd: pasta, tempo: TEMPO_COMPILAR_MS });
+    const comp = await executarProcesso('javac', ['-encoding', 'UTF-8', '-nowarn', '-proc:none', prep.classe + '.java'], { cwd: pasta, tempo: TEMPO_COMPILAR_MS });
     if (comp.code !== 0) {
       return { ok: false, tipo: 'compilacao', erro: limparErro(comp.err || comp.out, prep.linhasExtras) || 'Erro ao compilar.' };
     }

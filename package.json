@@ -1,6 +1,6 @@
 {
   "name": "codequest",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "CodeQuest - plataforma gamificada para aprender programação em português: Python, JavaScript, Java e a carreira Full Stack (HTML, CSS, React, Node.js, SQL e Git)",
   "main": "server.js",
   "scripts": {
@@ -11,7 +11,9 @@
     "curriculo": "node scripts/gerar-curriculo.js",
     "restaurar": "node scripts/restaurar-backup.js",
     "build:react": "esbuild scripts/react-entrada.js --bundle --minify --format=iife --platform=browser --target=es2019 --outfile=public/js/runtime/reactlib.js --legal-comments=eof",
-    "copiar:sql": "node -e \"const f=require('fs');f.mkdirSync('public/js/runtime/sql',{recursive:true});for(const a of ['sql-wasm.js','sql-wasm.wasm'])f.copyFileSync('node_modules/sql.js/dist/'+a,'public/js/runtime/sql/'+a)\""
+    "copiar:sql": "node -e \"const f=require('fs');f.mkdirSync('public/js/runtime/sql',{recursive:true});for(const a of ['sql-wasm.js','sql-wasm.wasm'])f.copyFileSync('node_modules/sql.js/dist/'+a,'public/js/runtime/sql/'+a)\"",
+    "test": "node --test tests/jogo.test.js tests/runtime.test.js tests/api.test.js",
+    "testar:tudo": "npm test && npm run validar"
   },
   "engines": {
     "node": ">=18"
@@ -19,6 +21,7 @@
   "license": "MIT",
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "compression": "^1.8.2",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",

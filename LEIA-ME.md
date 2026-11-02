@@ -38,6 +38,7 @@ Plataforma gamificada para aprender programação em português, no celular ou n
 | `docs/ARQUITETURA.md` | Como o código funciona por dentro |
 | `docs/DECISOES.md` | Por que cada coisa foi feita do jeito que foi |
 | `docs/ROTEIRO.md` | Ideias de melhorias futuras, por prioridade |
+| `docs/REVISAO.md` | Revisão geral do código: o que foi corrigido, como testar (`npm test`) e recomendações |
 | `CHANGELOG.md` | Histórico de tudo que mudou em cada versão |
 
 ## Sumário

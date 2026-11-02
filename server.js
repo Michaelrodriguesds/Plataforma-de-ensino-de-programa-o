@@ -11,6 +11,7 @@
 require('dotenv').config();
 const express = require('express');
 const helmet = require('helmet');
+const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -65,33 +66,49 @@ console.log(`📚 ${FASES.size} fases carregadas`);
 
 const app = express();
 app.set('trust proxy', 1); // necessário no Render/Railway (eles ficam na frente do app)
-app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
+// contentSecurityPolicy desligada: AdSense, Analytics e Pyodide carregam scripts de vários domínios.
+// referrerPolicy padrão dos navegadores: o AdSense e o Analytics precisam saber de onde veio a visita.
+app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false, referrerPolicy: { policy: 'strict-origin-when-cross-origin' } }));
+app.use(compression()); // compacta as respostas (o conteúdo das trilhas fica ~5x menor no celular)
 app.use(express.json({ limit: '100kb' }));
 
 // ---------- Limites contra abuso ----------
 const limiteLogin = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, message: { erro: 'Muitas tentativas. Espere alguns minutos.' } });
-const limiteJava = rateLimit({ windowMs: 60 * 1000, limit: 20, message: { erro: 'Calma! Muitas execuções seguidas. Espere um minutinho.' } });
+// Limites por ALUNO (não por IP): numa escola, a turma toda sai pelo mesmo IP.
+// Estes limites ficam sempre depois de exigirLogin, então req.usuarioId existe.
+const porAluno = req => 'u:' + req.usuarioId;
+const limiteJava = rateLimit({ windowMs: 60 * 1000, limit: 20, keyGenerator: porAluno, message: { erro: 'Calma! Muitas execuções seguidas. Espere um minutinho.' } });
 const limiteFeedback = rateLimit({ windowMs: 60 * 1000, limit: 10, message: { erro: 'Muitos avisos seguidos. Obrigado! Espere um pouco.' } });
 const limiteEvento = rateLimit({ windowMs: 60 * 1000, limit: 120, message: { erro: 'Muitos eventos.' } });
+const limiteProgresso = rateLimit({ windowMs: 60 * 1000, limit: 40, keyGenerator: porAluno, message: { erro: 'Calma! Muitas fases seguidas. Espere um pouco.' } });
 
 // ---------- "Porteiro": confere o crachá (token) ----------
-function lerToken(req) {
+// O token leva o id e a "versão" (tv). Trocar a senha aumenta a versão e
+// derruba os logins antigos (útil se alguém descobriu a senha).
+function lerTokenCompleto(req) {
   const h = req.headers.authorization || '';
   if (!h.startsWith('Bearer ')) return null;
-  try { return jwt.verify(h.slice(7), SEGREDO).id; } catch { return null; }
+  try { const d = jwt.verify(h.slice(7), SEGREDO); return d && d.id ? d : null; } catch { return null; }
 }
-function exigirLogin(req, res, next) {
-  const id = lerToken(req);
-  if (!id) return res.status(401).json({ erro: 'Faça login para continuar.' });
-  req.usuarioId = id;
+function lerToken(req) { const d = lerTokenCompleto(req); return d ? d.id : null; }
+// Confere o crachá E se a conta ainda existe; deixa a conta em req.u
+async function exigirLoginAsync(req, res, next) {
+  const d = lerTokenCompleto(req);
+  if (!d) return res.status(401).json({ erro: 'Faça login para continuar.' });
+  const u = await store.buscarPorId(d.id);
+  if (!u || (u.tv || 0) !== (d.tv || 0)) return res.status(401).json({ erro: 'Sua sessão terminou. Entre de novo.' });
+  req.usuarioId = d.id;
+  req.u = u;
   next();
 }
+const exigirLogin = (req, res, next) => exigirLoginAsync(req, res, next).catch(e => { console.error(e); res.status(500).json({ erro: 'Erro no servidor. Tente de novo.' }); });
 const ehAdmin = u => !!u && ADMINS.includes(u.usuario);
 async function exigirAdmin(req, res, next) {
-  const u = await store.buscarPorId(req.usuarioId);
-  if (!ehAdmin(u)) return res.status(403).json({ erro: 'Área só para o administrador.' });
+  if (!ehAdmin(req.u)) return res.status(403).json({ erro: 'Área só para o administrador.' });
   next();
 }
+// Avatar: só emoji/texto curto, sem caracteres de HTML
+const limparAvatar = a => String(a || '').replace(/[<>&"'`\\]/g, '').slice(0, 8) || '🦊';
 const pub = u => ({ ...jogo.usuarioPublico(u), admin: ehAdmin(u) });
 
 // Filtro simples de nomes ofensivos (o nome aparece no ranking público).
@@ -99,7 +116,7 @@ const pub = u => ({ ...jogo.usuarioPublico(u), admin: ehAdmin(u) });
 const PALAVRAS_PROIBIDAS = ['porra', 'caralho', 'buceta', 'putaria', 'filhadaputa', 'viado', 'cuzao', 'merda', 'fdp', 'vagabund', 'arrombad', 'piroca', 'nazista', 'hitler', 'admin', 'codequest'];
 const semAcento = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
 const nomeProibido = t => PALAVRAS_PROIBIDAS.some(p => semAcento(t).includes(p));
-const criarToken = u => jwt.sign({ id: u._id }, SEGREDO, { expiresIn: '60d' });
+const criarToken = u => jwt.sign({ id: u._id, tv: u.tv || 0 }, SEGREDO, { expiresIn: '60d' });
 const ok = fn => (req, res, next) => fn(req, res, next).catch(e => { console.error(e); res.status(500).json({ erro: 'Erro no servidor. Tente de novo.' }); });
 // estatística nunca pode derrubar o pedido principal
 const anotar = dados => store.registrarAtividade({ dia: jogo.hojeStr(), ...dados }).catch(e => console.error('estatística:', e.message));
@@ -111,11 +128,13 @@ app.post('/api/auth/cadastro', limiteLogin, ok(async (req, res) => {
   nome = String(nome || '').trim().slice(0, 30);
   if (!/^[a-z0-9_.]{3,20}$/.test(usuario)) return res.status(400).json({ erro: 'Usuário: 3 a 20 letras, números, ponto ou _ (sem espaço e sem acento).' });
   if (nome.length < 2) return res.status(400).json({ erro: 'Digite seu nome (pelo menos 2 letras).' });
-  if (String(senha || '').length < 6) return res.status(400).json({ erro: 'A senha precisa ter pelo menos 6 caracteres.' });
+  senha = typeof senha === 'string' ? senha : '';
+  if (senha.length < 6) return res.status(400).json({ erro: 'A senha precisa ter pelo menos 6 caracteres.' });
+  if (senha.length > 72) return res.status(400).json({ erro: 'Senha longa demais (máximo 72 caracteres).' });
   if (nomeProibido(usuario) || nomeProibido(nome)) return res.status(400).json({ erro: 'Escolha outro nome: ele aparece no ranking para todo mundo.' });
   if (await store.buscarPorUsuario(usuario)) return res.status(409).json({ erro: 'Esse usuário já existe. Escolha outro.' });
   const senhaHash = await bcrypt.hash(senha, 10);
-  const u = await store.criar(jogo.novoUsuario({ usuario, nome, senhaHash, avatar: String(avatar || '🦊').slice(0, 8) }));
+  const u = await store.criar(jogo.novoUsuario({ usuario, nome, senhaHash, avatar: limparAvatar(avatar) }));
   anotar({ uid: u._id, tipo: 'cadastro' });
   res.json({ token: criarToken(u), usuario: pub(u) });
 }));
@@ -131,27 +150,39 @@ app.post('/api/auth/login', limiteLogin, ok(async (req, res) => {
 
 // ---------- Dados do jogador ----------
 app.get('/api/eu', exigirLogin, ok(async (req, res) => {
-  const u = await store.buscarPorId(req.usuarioId);
-  if (!u) return res.status(401).json({ erro: 'Conta não encontrada.' });
+  const u = req.u;
   res.json({ usuario: pub(u) });
 }));
 
 app.patch('/api/eu', exigirLogin, ok(async (req, res) => {
-  const u = await store.buscarPorId(req.usuarioId);
+  const u = req.u;
   const { nome, avatar, metaDiaria } = req.body || {};
   if (nome && nomeProibido(nome)) return res.status(400).json({ erro: 'Escolha outro nome: ele aparece no ranking para todo mundo.' });
   if (nome && String(nome).trim().length >= 2) u.nome = String(nome).trim().slice(0, 30);
-  if (avatar) u.avatar = String(avatar).slice(0, 8);
+  if (avatar) u.avatar = limparAvatar(avatar);
   if ([10, 20, 30, 50, 80].includes(Number(metaDiaria))) u.metaDiaria = Number(metaDiaria);
   await store.salvar(u);
   res.json({ usuario: pub(u) });
 }));
 
+// Trocar a própria senha (pede a atual). Derruba os outros logins.
+app.post('/api/eu/senha', exigirLogin, limiteLogin, ok(async (req, res) => {
+  const u = req.u;
+  const { atual, nova } = req.body || {};
+  if (!(await bcrypt.compare(String(atual || ''), u.senhaHash))) return res.status(403).json({ erro: 'A senha atual não confere.' });
+  if (typeof nova !== 'string' || nova.length < 6) return res.status(400).json({ erro: 'A nova senha precisa ter pelo menos 6 caracteres.' });
+  if (nova.length > 72) return res.status(400).json({ erro: 'Senha longa demais (máximo 72 caracteres).' });
+  u.senhaHash = await bcrypt.hash(nova, 10);
+  u.tv = (u.tv || 0) + 1;
+  await store.salvar(u);
+  res.json({ ok: true, token: criarToken(u) });
+}));
+
 // Excluir a própria conta (direito previsto na LGPD). Pede a senha para confirmar.
 app.post('/api/eu/excluir', exigirLogin, limiteLogin, ok(async (req, res) => {
-  const u = await store.buscarPorId(req.usuarioId);
+  const u = req.u;
   if (!u || !(await bcrypt.compare(String((req.body || {}).senha || ''), u.senhaHash))) {
-    return res.status(401).json({ erro: 'Senha incorreta.' });
+    return res.status(403).json({ erro: 'Senha incorreta.' }); // 403 (e não 401) para o app não deslogar a pessoa
   }
   await store.excluir(u._id);
   res.json({ ok: true });
@@ -162,8 +193,8 @@ app.get('/api/meta', (req, res) => {
 });
 
 // ---------- Progresso ----------
-app.post('/api/progresso/fase', exigirLogin, ok(async (req, res) => {
-  const u = await store.buscarPorId(req.usuarioId);
+app.post('/api/progresso/fase', exigirLogin, limiteProgresso, ok(async (req, res) => {
+  const u = req.u;
   const { faseId, erros, dicas, solucoes } = req.body || {};
   const r = jogo.concluirFase(u, FASES, String(faseId), {
     erros: Number(erros) || 0, dicas: Number(dicas) || 0, solucoes: Number(solucoes) || 0
@@ -174,8 +205,8 @@ app.post('/api/progresso/fase', exigirLogin, ok(async (req, res) => {
   res.json({ ...r, usuario: pub(u) });
 }));
 
-app.post('/api/progresso/revisao', exigirLogin, ok(async (req, res) => {
-  const u = await store.buscarPorId(req.usuarioId);
+app.post('/api/progresso/revisao', exigirLogin, limiteProgresso, ok(async (req, res) => {
+  const u = req.u;
   const r = jogo.registrarRevisao(u, FASES, (req.body || {}).resultados);
   await store.salvar(u);
   anotar({ uid: u._id, tipo: 'revisao' });
@@ -187,7 +218,7 @@ app.get('/api/ranking', exigirLogin, ok(async (req, res) => {
   const semanal = req.query.periodo !== 'geral';
   const sk = jogo.semanaKey();
   const lista = await store.ranking({ semanaKey: semanal ? sk : null, limite: 50 });
-  const eu = await store.buscarPorId(req.usuarioId);
+  const eu = req.u;
   res.json({
     periodo: semanal ? 'semana' : 'geral',
     lista: lista.map((u, i) => ({
@@ -246,14 +277,14 @@ app.post('/api/feedback', exigirLogin, limiteFeedback, ok(async (req, res) => {
   const { faseId, passo, texto } = req.body || {};
   const t = String(texto || '').trim().slice(0, 1000);
   if (t.length < 3) return res.status(400).json({ erro: 'Escreva o que aconteceu.' });
-  const u = await store.buscarPorId(req.usuarioId);
+  const u = req.u;
   await store.salvarFeedback({ faseId: String(faseId || '').slice(0, 30), passo: String(passo || '').slice(0, 30), texto: t, usuario: u ? u.usuario : '?', em: new Date().toISOString() });
   res.json({ ok: true });
 }));
 
 // ---------- Prova final e certificado ----------
 // Regras em src/jogo.js (PROVA). O certificado é ilustrativo: não é reconhecido pelo MEC.
-const limiteProva = rateLimit({ windowMs: 60 * 1000, limit: 20, message: { erro: 'Muitas tentativas. Espere um minutinho.' } });
+const limiteProva = rateLimit({ windowMs: 60 * 1000, limit: 20, keyGenerator: porAluno, message: { erro: 'Muitas tentativas. Espere um minutinho.' } });
 function cursoDaRota(req, res) {
   const c = CURSOS[req.params.curso];
   if (!c) { res.status(404).json({ erro: 'Trilha não encontrada.' }); return null; }
@@ -261,23 +292,24 @@ function cursoDaRota(req, res) {
 }
 app.get('/api/prova/:curso', exigirLogin, ok(async (req, res) => {
   const c = cursoDaRota(req, res); if (!c) return;
-  const u = await store.buscarPorId(req.usuarioId);
+  const u = req.u;
   res.json(jogo.situacaoProva(u, c));
 }));
 app.post('/api/prova/:curso/iniciar', exigirLogin, limiteProva, ok(async (req, res) => {
   const c = cursoDaRota(req, res); if (!c) return;
-  const u = await store.buscarPorId(req.usuarioId);
+  const u = req.u;
   const st = jogo.situacaoProva(u, c);
   if (!st.liberada) return res.status(403).json({ erro: `Conclua todas as fases da trilha para liberar a prova (faltam ${st.faltam}).` });
   if (st.restantesHoje <= 0) return res.status(429).json({ erro: `Você já usou as ${jogo.PROVA.tentativasPorDia} tentativas de hoje. Revise as fases e tente amanhã!` });
   const ids = jogo.sortear(jogo.bancoProva(c), jogo.PROVA.questoes);
   u.provas = u.provas || {};
   const p = u.provas[c.id] = u.provas[c.id] || { tentativas: [] };
-  p.tentativas.push({ dia: jogo.hojeStr(), em: new Date().toISOString(), nota: null });
+  const tid = crypto.randomUUID();
+  p.tentativas.push({ tid, dia: jogo.hojeStr(), em: new Date().toISOString(), nota: null });
   p.tentativas = p.tentativas.slice(-30);
   await store.salvar(u);
   // As perguntas sorteadas vão "assinadas": na correção, o servidor confere que são as mesmas
-  const token = jwt.sign({ uid: u._id, curso: c.id, ids }, SEGREDO, { expiresIn: '3h' });
+  const token = jwt.sign({ uid: u._id, curso: c.id, ids, tid }, SEGREDO, { expiresIn: '3h' });
   res.json({ ids, token, minimo: jogo.PROVA.minimo });
 }));
 app.post('/api/prova/:curso/enviar', exigirLogin, limiteProva, ok(async (req, res) => {
@@ -285,6 +317,9 @@ app.post('/api/prova/:curso/enviar', exigirLogin, limiteProva, ok(async (req, re
   let dados;
   try { dados = jwt.verify(String((req.body || {}).token || ''), SEGREDO); } catch { return res.status(400).json({ erro: 'Prova vencida ou inválida. Comece de novo.' }); }
   if (dados.uid !== req.usuarioId || dados.curso !== c.id) return res.status(400).json({ erro: 'Prova inválida.' });
+  // cada prova só pode ser entregue uma vez (senão daria para usar o gabarito e reenviar)
+  const pendente = ((req.u.provas || {})[c.id] || { tentativas: [] }).tentativas.find(t => t.tid === dados.tid && t.nota === null);
+  if (!pendente) return res.status(400).json({ erro: 'Esta prova já foi entregue. Comece uma nova tentativa.' });
   const respostas = Array.isArray(req.body.respostas) ? req.body.respostas : [];
   const gabarito = dados.ids.map((id, i) => {
     const ex = jogo.exercicioPorId(c, id);
@@ -293,20 +328,20 @@ app.post('/api/prova/:curso/enviar', exigirLogin, limiteProva, ok(async (req, re
   const acertos = gabarito.filter(g => g.acertou).length;
   const nota = Math.round(acertos / gabarito.length * 100);
   const aprovado = acertos / gabarito.length >= jogo.PROVA.minimo;
-  const u = await store.buscarPorId(req.usuarioId);
+  const u = req.u;
   const p = (u.provas = u.provas || {})[c.id] = (u.provas[c.id] || { tentativas: [] });
-  const ultima = [...p.tentativas].reverse().find(t => t.nota === null);
-  if (ultima) ultima.nota = nota;
+  const tentativa = p.tentativas.find(t => t.tid === dados.tid);
+  if (tentativa) tentativa.nota = nota;
   p.melhor = Math.max(p.melhor || 0, nota);
   if (aprovado && !p.aprovado) p.aprovado = { nota, em: new Date().toISOString() };
   // se já tem certificado e melhorou a nota, o certificado mostra a melhor
   if (u.certificados && u.certificados[c.id]) u.certificados[c.id].nota = p.melhor;
   await store.salvar(u);
-  res.json({ acertos, total: gabarito.length, nota, aprovado, minimo: Math.round(jogo.PROVA.minimo * 100), gabarito, usuario: jogo.usuarioPublico(u) });
+  res.json({ acertos, total: gabarito.length, nota, aprovado, minimo: Math.round(jogo.PROVA.minimo * 100), gabarito, usuario: pub(u) });
 }));
 app.post('/api/certificados/:curso', exigirLogin, ok(async (req, res) => {
   const c = cursoDaRota(req, res); if (!c) return;
-  const u = await store.buscarPorId(req.usuarioId);
+  const u = req.u;
   const p = (u.provas || {})[c.id];
   if (!p || !p.aprovado) return res.status(403).json({ erro: 'Passe na prova final para emitir o certificado.' });
   const nome = String((req.body || {}).nome || u.nome).replace(/\s+/g, ' ').trim().slice(0, 80);
@@ -322,7 +357,7 @@ app.post('/api/certificados/:curso', exigirLogin, ok(async (req, res) => {
   u.certificados[c.id] = cert;
   u.codigosCert = Array.from(new Set([...(u.codigosCert || []), cert.codigo]));
   await store.salvar(u);
-  res.json({ certificado: cert, url: '/certificado/' + cert.codigo, usuario: jogo.usuarioPublico(u) });
+  res.json({ certificado: cert, url: '/certificado/' + cert.codigo, usuario: pub(u) });
 }));
 
 // ---------- Sugestões, pedidos e elogios (com ou sem conta) ----------
@@ -357,6 +392,7 @@ app.post('/api/admin/usuarios/:usuario/senha', exigirLogin, ok(exigirAdmin), ok(
   if (!u) return res.status(404).json({ erro: 'Usuário não encontrado.' });
   const provisoria = crypto.randomBytes(12).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 8) || 'troque123';
   u.senhaHash = await bcrypt.hash(provisoria, 10);
+  u.tv = (u.tv || 0) + 1; // quem estava logado com a senha antiga sai
   await store.salvar(u);
   res.json({ ok: true, usuario: u.usuario, senha: provisoria });
 }));

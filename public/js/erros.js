@@ -5,6 +5,10 @@
 // =============================================================
 (function () {
   var REGRAS = [
+    // ---------- Avisos do próprio CodeQuest (servidor) ----------
+    [/Muitas execuções seguidas/i, 'Calma, muitas execuções seguidas', 'O Java roda no nosso servidor e cada aluno pode rodar até 20 vezes por minuto. Espere um minutinho e tente de novo: seu código continua aí.'],
+    [/Sem conexão com o servidor/i, 'Sem conexão', 'O Java roda no nosso servidor e a internet caiu ou o servidor está acordando (no plano grátis ele dorme quando ninguém usa). Espere uns segundos e tente de novo.'],
+    [/Faça login|Entre na sua conta|Sessão expirada/i, 'Entre na sua conta', 'Para rodar Java é preciso estar logado. Entre de novo e volte para esta fase.'],
     // ---------- SQL (SQLite) ----------
     [/no such table: (\w+)/i, 'Tabela não existe: $1', 'Não existe tabela chamada "$1". Confira o nome nas tabelas do exercício (o SQL não perdoa letra trocada) ou se você criou a tabela com CREATE TABLE antes.'],
     [/no such column: ([\w.]+)/i, 'Coluna não existe: $1', 'A coluna "$1" não existe. Confira o nome nas tabelas. Se era um texto, ele precisa de aspas simples: \'Ana\'.'],

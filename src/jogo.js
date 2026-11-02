@@ -214,6 +214,7 @@ function concluirFase(u, fasesIdx, faseId, info) {
   let xpGanho;
   if (!antes) xpGanho = xpDaFase;                                   // primeira vez: XP cheio
   else if (xpDaFase > antes.melhorXp) xpGanho = xpDaFase - antes.melhorXp + 3; // melhorou
+  else if (Date.now() - Date.parse(antes.em || 0) < 60 * 1000) xpGanho = 0; // repetiu em menos de 1 minuto: não vale (evita "farmar" XP)
   else xpGanho = 3;                                                  // treino repetido
   u.fases[faseId] = {
     estrelas: Math.max(estrelas, antes ? antes.estrelas : 0),
@@ -235,15 +236,18 @@ function concluirFase(u, fasesIdx, faseId, info) {
 function registrarRevisao(u, fasesIdx, resultados) {
   const hoje = hojeStr();
   let certas = 0;
-  for (const r of (resultados || []).slice(0, 30)) {
-    const item = u.revisao[r.id];
+  let validos = 0;
+  for (const r of (Array.isArray(resultados) ? resultados : []).slice(0, 30)) {
+    if (!r || typeof r !== 'object') continue;
+    const item = u.revisao[String(r.id)];
     if (!item || item.proxima > hoje) continue; // só vale para itens que estavam "vencidos"
-    if (r.ok) { item.caixa = Math.min(item.caixa + 1, INTERVALOS.length); certas++; }
+    validos++;
+    if (r.ok === true) { item.caixa = Math.min(item.caixa + 1, INTERVALOS.length); certas++; }
     else item.caixa = 1;
     item.proxima = somarDias(hoje, INTERVALOS[item.caixa - 1]);
   }
   u.revisoesCertas = (u.revisoesCertas || 0) + certas;
-  const xpGanho = certas * 2 + (resultados && resultados.length ? 5 : 0);
+  const xpGanho = certas * 2 + (validos ? 5 : 0); // o bônus de 5 só vale se havia algo para revisar
   const ofensivaAntes = ofensivaVisivel(u);
   ganharXp(u, xpGanho);
   const novas = verificarConquistas(u, fasesIdx);

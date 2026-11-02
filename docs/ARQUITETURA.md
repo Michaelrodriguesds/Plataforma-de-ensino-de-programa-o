@@ -163,3 +163,14 @@ certificados { 'git': {codigo, curso, nome, nota, horas, em} }, codigosCert [có
 ## Variáveis de ambiente
 
 Ver `.env.example` (todas comentadas).
+
+## Testes
+
+| Arquivo | O que testa |
+|---|---|
+| `tests/jogo.test.js` | Regras (XP, estrelas, revisão, prova) e integridade do conteúdo (ids, habilidades, perguntas da prova) |
+| `tests/runtime.test.js` | Motores: JavaScript, CSS, SQL, Node de treino e terminal/Git |
+| `tests/api.test.js` | Liga o servidor numa porta livre com um banco temporário e testa a API e o site público |
+| `scripts/validar-conteudo.js` | Roda todas as respostas de todas as fases |
+
+`npm test` roda os três primeiros; `npm run testar:tudo` roda tudo. O GitHub Actions (`.github/workflows/testes.yml`) roda a cada push.

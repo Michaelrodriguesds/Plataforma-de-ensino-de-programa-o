@@ -670,3 +670,8 @@ pre.terminal, .saida pre.terminal { background: #0B0A16; color: #E6E3FF; border:
 .item-cert { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; background: var(--noite-2); border: 1px solid var(--linha); color: var(--texto); text-decoration: none; }
 .item-cert span:first-child { font-size: 1.6rem; }
 .item-cert small { display: block; color: var(--texto-3); }
+.trocar-senha { margin: 4px 0 8px; }
+.trocar-senha summary { cursor: pointer; font-weight: 700; color: var(--texto-2); }
+.form-senha { display: grid; gap: 8px; margin-top: 8px; }
+.form-senha label { display: grid; gap: 4px; font-weight: 600; }
+.form-senha input { font: inherit; color: var(--texto); background: var(--noite-2); border: 1px solid var(--linha); border-radius: 10px; padding: 8px 10px; }
