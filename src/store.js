@@ -177,7 +177,8 @@ class MongoStore {
   constructor(uri) { this.uri = uri; }
   async conectar() {
     const { MongoClient } = require('mongodb');
-    this.cliente = new MongoClient(this.uri);
+    if (/<(db_)?password>/i.test(this.uri)) throw new Error('A MONGODB_URI ainda tem o texto <db_password>. Troque pela senha do usuário do banco (sem os sinais < >).');
+    this.cliente = new MongoClient(this.uri, { serverSelectionTimeoutMS: 15000 });
     await this.cliente.connect();
     const db = this.cliente.db(process.env.MONGODB_DB || 'codequest');
     this.col = db.collection('usuarios');
@@ -302,7 +303,8 @@ class MongoStore {
 }
 
 function criarStore() {
-  const uri = process.env.MONGODB_URI;
+  // Tira espaços e aspas que às vezes vêm junto ao colar a string no Render ou no .env
+  const uri = String(process.env.MONGODB_URI || '').trim().replace(/^["'`]+|["'`]+$/g, '').trim();
   if (uri) return new MongoStore(uri);
   return new ArquivoStore(process.env.ARQUIVO_DADOS || path.join(__dirname, '..', 'data', 'db.json'));
 }

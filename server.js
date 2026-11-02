@@ -470,7 +470,14 @@ store.conectar().then(() => {
     console.log(`📊 Painel do dono: ${ADMINS.length ? ADMINS.join(', ') + ' → /app#/admin' : 'defina ADMIN_USUARIOS no .env'}\n`);
   });
 }).catch(e => {
-  console.error('❌ Não consegui conectar no banco de dados:', e.message);
-  console.error('   Confira a MONGODB_URI no arquivo .env (ou apague a linha para usar o arquivo local).');
+  const m = String(e && e.message || e);
+  console.error('❌ Não consegui conectar no banco de dados:', m);
+  let dica = 'Confira a MONGODB_URI (no Render: Environment; no PC: arquivo .env). Sem ela, o site usa o arquivo local.';
+  if (/<(db_)?password>/i.test(m)) dica = 'Troque <db_password> pela senha do usuário do banco, sem os sinais < >.';
+  else if (/scheme|must begin with|Invalid connection string|URI must include/i.test(m)) dica = 'A string precisa começar com mongodb+srv:// — copie de novo no Atlas: Connect → Drivers. Sem aspas e sem espaços.';
+  else if (/bad auth|Authentication failed|auth/i.test(m)) dica = 'Usuário ou senha do banco errados. No Atlas: Database Access → Edit → Edit Password. Use uma senha só com letras e números e cole de novo na string.';
+  else if (/unescaped|URI malformed|Password contains/i.test(m)) dica = 'A senha tem caractere especial (@ : / ? # % ). No Atlas, troque a senha por uma só com letras e números.';
+  else if (/timed out|Server selection|ENOTFOUND|querySrv|ECONNREFUSED|whitelist|SSL|TLS/i.test(m)) dica = 'O Atlas não deixou o servidor entrar. No Atlas: Network Access → Add IP Address → Allow access from anywhere (0.0.0.0/0). Confira também se o cluster não está pausado.';
+  console.error('   👉 ' + dica);
   process.exit(1);
 });
