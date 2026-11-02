@@ -206,17 +206,39 @@ app.post('/api/executar/java', exigirLogin, limiteJava, ok(async (req, res) => {
 // ---------- Estatísticas de visita ----------
 // Cada tela aberta manda: { vid: código aleatório do aparelho, pagina: 'app/inicio' }
 const ROBO = /bot|crawl|spider|slurp|mediapartners|lighthouse|headless|preview|facebookexternalhit|whatsapp/i;
+// "Online agora": aparelhos que deram sinal nos últimos 5 minutos.
+// Fica só na memória (zera se o servidor reiniciar) e não guarda nada pessoal.
+const ONLINE_MS = 5 * 60 * 1000;
+const online = new Map(); // vid -> { t, logado, pagina }
+function contarOnline() {
+  const limite = Date.now() - ONLINE_MS;
+  let agora = 0, logados = 0;
+  const paginas = {};
+  for (const [vid, o] of online) {
+    if (o.t < limite) { online.delete(vid); continue; }
+    agora++;
+    if (o.logado) logados++;
+    const area = String(o.pagina || '').split('/').slice(0, 2).join('/') || '?';
+    paginas[area] = (paginas[area] || 0) + 1;
+  }
+  return { agora, logados, visitantes: agora - logados, paginas: Object.entries(paginas).sort((a, b) => b[1] - a[1]).slice(0, 6) };
+}
 app.post('/api/evento', limiteEvento, ok(async (req, res) => {
   if (ROBO.test(req.get('user-agent') || '')) return res.status(204).end(); // robôs não contam
-  const { vid, pagina } = req.body || {};
+  const { vid, pagina, tipo } = req.body || {};
   if (!/^[\w-]{8,64}$/.test(String(vid || ''))) return res.status(400).json({ erro: 'vid inválido' });
-  await store.registrarVisita({ dia: jogo.hojeStr(), vid: String(vid), uid: lerToken(req), pagina: String(pagina || '') });
+  const uid = lerToken(req);
+  if (online.size < 50000) online.set(String(vid), { t: Date.now(), logado: !!uid, pagina: String(pagina || '').slice(0, 60) });
+  if (tipo === 'sinal') return res.status(204).end(); // "ainda estou aqui": não conta como visualização
+  await store.registrarVisita({ dia: jogo.hojeStr(), vid: String(vid), uid, pagina: String(pagina || '') });
   res.status(204).end();
 }));
 
 // ---------- Painel do administrador ----------
 app.get('/api/admin/painel', exigirLogin, ok(exigirAdmin), ok(async (req, res) => {
-  res.json(await montarPainel(store, CURSOS));
+  const painel = await montarPainel(store, CURSOS);
+  painel.online = contarOnline();
+  res.json(painel);
 }));
 
 // ---------- Avisos de problema nas aulas ("Reportar problema") ----------
@@ -226,6 +248,24 @@ app.post('/api/feedback', exigirLogin, limiteFeedback, ok(async (req, res) => {
   if (t.length < 3) return res.status(400).json({ erro: 'Escreva o que aconteceu.' });
   const u = await store.buscarPorId(req.usuarioId);
   await store.salvarFeedback({ faseId: String(faseId || '').slice(0, 30), passo: String(passo || '').slice(0, 30), texto: t, usuario: u ? u.usuario : '?', em: new Date().toISOString() });
+  res.json({ ok: true });
+}));
+
+// ---------- Sugestões, pedidos e elogios (com ou sem conta) ----------
+const TIPOS_SUGESTAO = ['sugestao', 'conteudo', 'problema', 'elogio'];
+app.post('/api/sugestao', limiteFeedback, ok(async (req, res) => {
+  const { tipo, texto, nota, contato, pagina } = req.body || {};
+  const t = String(texto || '').trim().slice(0, 1500);
+  if (!TIPOS_SUGESTAO.includes(tipo)) return res.status(400).json({ erro: 'Escolha o tipo da mensagem.' });
+  if (t.length < 5) return res.status(400).json({ erro: 'Escreva um pouco mais, por favor.' });
+  const n = Number(nota);
+  const uid = lerToken(req);
+  const u = uid ? await store.buscarPorId(uid) : null;
+  await store.salvarFeedback({
+    tipo, texto: t, nota: Number.isInteger(n) && n >= 1 && n <= 5 ? n : null,
+    contato: String(contato || '').trim().slice(0, 100), pagina: String(pagina || '').slice(0, 60),
+    usuario: u ? u.usuario : 'visitante', em: new Date().toISOString()
+  });
   res.json({ ok: true });
 }));
 

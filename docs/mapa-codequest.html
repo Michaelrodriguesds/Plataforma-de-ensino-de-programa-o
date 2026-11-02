@@ -371,14 +371,14 @@ code { font-family: var(--f-codigo); font-size: .88em; background: var(--painel2
       ] },
     { id: 'e5', titulo: 'Colocar no ar (Render)', quem: 'você', tempo: '20 min + espera', desc: 'Publicar o site com Java, ligado ao Atlas.',
       passos: [
-        { t: 'Criar o serviço', como: ['render.com → entre com o GitHub', 'New → Web Service → escolha o repositório codequest', 'Language: Docker · Instance Type: Free'] },
-        { t: 'Cadastrar as variáveis', como: ['Em Environment Variables, adicione uma por uma (JWT_SECRET: invente uma frase longa e nunca mude)'],
-          cmd: 'MONGODB_URI=sua-string-do-atlas\nJWT_SECRET=uma-frase-longa-e-aleatoria-1234\nADMIN_USUARIOS=michael\nCONTATO_EMAIL=seu-email@gmail.com\nANUNCIOS_DEMO=0\nFUSO_HORARIO=America/Sao_Paulo' },
-        { t: 'Publicar e esperar o "Live"', como: ['Create Web Service · a primeira vez leva alguns minutos (instala Node e Java)'], ok: 'o status ficar verde "Live" e o endereço https://...onrender.com abrir o site.' },
+        { t: 'Criar pelo Blueprint (sem precisar saber Docker)', como: ['render.com → entre com a conta do GitHub', 'New → Blueprint → escolha o repositório Plataforma-de-ensino-de-programa-o', 'O Render lê o arquivo render.yaml do projeto e já configura tudo: Docker, Java, plano grátis e a chave secreta', 'Você não precisa abrir nem mexer no Dockerfile'] },
+        { t: 'Preencher as 3 perguntas', como: ['O Render pede só o que é seu. Cole os valores e clique em Apply (ou Deploy Blueprint)'],
+          cmd: 'MONGODB_URI=sua-string-do-atlas\nADMIN_USUARIOS=michael\nCONTATO_EMAIL=seu-email@gmail.com' },
+        { t: 'Esperar o "Live"', ok: 'o status ficar verde "Live" e o endereço https://...onrender.com abrir o site.' , como: ['A primeira vez leva alguns minutos (o Render monta a "caixa" com Node e Java sozinho)'] },
         { t: 'Criar sua conta no site online', como: ['Abra o endereço do Render, crie a conta com o usuário do ADMIN_USUARIOS e confira o 📊 Painel'] }
       ],
       erros: [
-        { p: 'Não aparece o plano Free com Docker', s: 'Use Language: Node, Build: npm install, Start: npm start. Funciona tudo, menos os exercícios de Java.' },
+        { p: 'O Blueprint pede cartão ou não aceita o plano grátis', s: 'Crie à mão: New → Web Service → o repositório → Language: Docker → Instance Type: Free, e cadastre as variáveis MONGODB_URI, JWT_SECRET (uma frase longa), ADMIN_USUARIOS e CONTATO_EMAIL. Se não houver Docker no grátis, use Language: Node (Build: npm install, Start: npm start): tudo funciona, menos os exercícios de Java.' },
         { p: 'Deploy falhou', s: 'Abra a aba Logs no Render e procure a primeira linha vermelha. Quase sempre é a MONGODB_URI errada.' },
         { p: 'Demora 1 minuto para abrir', s: 'Normal no plano grátis depois de 15 min sem visitas. Um ping do UptimeRobot em /api/saude a cada 10 min resolve.' }
       ] },

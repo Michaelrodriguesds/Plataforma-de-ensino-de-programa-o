@@ -10,6 +10,17 @@ Formato: **MAIOR.MENOR.CORREÇÃO**
 
 ---
 
+## [1.3.1] — 2026-11-02 — Sugestões, "online agora" e Render sem Docker
+
+- **Tela 💬 Sugestões** (`#/sugestao`), que funciona com ou sem conta: tipo (ideia, pedido de aula, problema, elogio), nota de 1 a 5 estrelas e contato opcional para resposta. Links no início do app, no perfil, no fim de cada fase e no rodapé do site. Rota `POST /api/sugestao`.
+- **Painel:**
+  - bloco **Agora** com **🟢 Online agora** (aparelhos com o site aberto nos últimos 5 minutos, com conta e visitantes) e onde eles estão. O app manda um sinal por minuto (`tipo: 'sinal'`, que não conta como visita);
+  - **Mensagens dos alunos** junta as sugestões e os avisos ⚑, com filtro por tipo, nota média e contato;
+  - o funil "Onde as pessoas param" agora mostra as 8 trilhas.
+- `render.yaml` pergunta `ADMIN_USUARIOS` e `CONTATO_EMAIL` e já define `ANUNCIOS_DEMO=0`: publicar pelo **Blueprint** do Render não exige saber Docker. Mapa visual atualizado com esse caminho.
+
+---
+
 ## [1.3.0] — 2026-11-02 — Carreira Full Stack
 
 ### 5 trilhas novas: de 103 para 197 fases (de 409 para 709 exercícios)

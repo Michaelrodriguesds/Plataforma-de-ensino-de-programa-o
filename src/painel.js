@@ -34,7 +34,7 @@ async function montarPainel(store, cursos) {
   const voltaram = coorte.filter(u => ativos7.has(u._id)).length;
 
   // Funil: quantas pessoas concluíram cada fase (mostra onde desistem)
-  const funil = ['python', 'javascript', 'java'].filter(id => cursos[id]).map(id => cursos[id]).map(c => {
+  const funil = ['python', 'javascript', 'java', 'htmlcss', 'react', 'backend', 'sql', 'git'].filter(id => cursos[id]).map(id => cursos[id]).map(c => {
     const fases = [];
     c.mundos.forEach(mu => mu.fases.forEach(f => fases.push(f)));
     const contagem = {};

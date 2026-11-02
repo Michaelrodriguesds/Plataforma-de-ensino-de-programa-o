@@ -69,7 +69,7 @@ ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd).replace(
 ${corpo}
 </main>
 <footer class="pub-rodape">
-  <nav aria-label="Institucional"><a href="/sobre">Sobre e contato</a><a href="/privacidade">Privacidade</a><a href="/termos">Termos de uso</a><a href="/aprender">Todas as aulas</a></nav>
+  <nav aria-label="Institucional"><a href="/sobre">Sobre e contato</a><a href="/privacidade">Privacidade</a><a href="/termos">Termos de uso</a><a href="/aprender">Todas as aulas</a><a href="/app#/sugestao">💬 Sugestões</a></nav>
   <p>CodeQuest © ${ano}. Gratuito para sempre: o site é mantido por anúncios.</p>
 </footer>
 <div id="toasts" aria-live="assertive"></div>

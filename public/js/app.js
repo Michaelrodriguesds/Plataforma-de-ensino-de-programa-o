@@ -190,6 +190,7 @@
     // conta a tela para as estatísticas (o painel do dono não entra na conta)
     if (rota !== 'admin') window.cqRastrear('app/' + (rota || 'inicio') + (partes[1] ? '/' + partes[1] : ''));
     if (rota === 'entrar' || rota === 'cadastro') return telaEntrar(rota);
+    if (rota === 'sugestao' && !ls('cq_token')) return telaSugestao(); // dá para mandar sugestão sem conta
     if (!ls('cq_token')) {
       // guarda para onde a pessoa queria ir (ex: uma fase aberta pelo site) e volta lá depois do login
       try { if (rota) sessionStorage.setItem('cq_destino', location.hash); } catch (e) {}
@@ -213,6 +214,7 @@
     if (rota === 'ranking') return telaRanking(partes[1] || 'semana');
     if (rota === 'perfil') return telaPerfil();
     if (rota === 'lab' && CURSOS[partes[1]]) return telaLab(partes[1]);
+    if (rota === 'sugestao') return telaSugestao();
     if (rota === 'admin') return telaAdmin();
     ir('#/');
   }
@@ -296,6 +298,7 @@
         mapaFullStack() +
         '<div class="cursos">' + FULLSTACK.filter(function (c) { return LINGUAGENS.indexOf(c) < 0; }).map(cartaoCurso).join('') + '</div>' : '') +
       '<div class="anuncio-slot"></div>' +
+      '<a class="cartao-sugestao" href="#/sugestao"><span class="ico-grande">💬</span><span><b>Ajude a melhorar o CodeQuest</b><br>Mande uma sugestão, peça uma aula nova ou conte um problema. A gente lê tudo.</span><span class="seta" aria-hidden="true">›</span></a>' +
       '<section class="dica-estudo"><h2 class="titulo-secao">Como estudar aqui</h2><ol>' +
       '<li><b>Leia o cartão e rode o exemplo.</b> Antes de rodar, tente prever o que vai aparecer.</li>' +
       '<li><b>Erre sem medo.</b> Pergunta errada volta no fim da fase, e as dicas aparecem aos poucos.</li>' +
@@ -787,6 +790,7 @@
       '<div class="res-acoes">' +
       (prox ? '<a class="btn btn-grande" href="#/fase/' + prox + '">Próxima: ' + esc(FASES[prox].fase.titulo) + '</a>' : '<a class="btn btn-grande" href="#/trilha/' + info.curso.id + '">Trilha completa! 🎓</a>') +
       '<a class="btn btn-sec" href="#/trilha/' + info.curso.id + '">Ver trilha</a></div>' +
+      '<p class="res-sugestao"><a href="#/sugestao">💬 O que achou desta fase? Mande uma sugestão</a></p>' +
       '<div class="anuncio-slot"></div>' +
       '</section>';
     E.sons.fase();
@@ -891,6 +895,7 @@
       '<label>Meta diária<select class="sel-meta">' + [10, 20, 30, 50, 80].map(function (m) { return '<option value="' + m + '"' + (m === u.metaDiaria ? ' selected' : '') + '>' + m + ' XP por dia' + (m === 10 ? ' (tranquilo)' : m === 30 ? ' (recomendado)' : m === 80 ? ' (intenso)' : '') + '</option>'; }).join('') + '</select></label>' +
       '<label class="linha-check"><input type="checkbox" class="chk-som"' + (E.somLigado() ? ' checked' : '') + '> Sons de acerto e erro</label>' +
       '<button class="btn btn-sec btn-sair">Sair da conta</button></div>' +
+      '<h2 class="titulo-secao">Sua opinião</h2><div class="ajustes"><p class="nota">Ideias, pedidos de aulas, problemas ou elogios: tudo chega direto para quem cuida do site.</p><a class="btn btn-sec" href="#/sugestao">💬 Enviar sugestão</a></div>' +
       '<h2 class="titulo-secao">Privacidade</h2><div class="ajustes">' +
       '<p class="nota"><a href="/privacidade">Política de privacidade</a> · <a href="/termos">Termos de uso</a> · <a href="/aprender">Aulas abertas</a></p>' +
       '<button class="btn btn-sec btn-cookies">Preferências de cookies</button>' +
@@ -918,6 +923,67 @@
         E.aviso('Conta excluída. Obrigado por ter estudado com a gente 💜', 'ok');
         ir('#/cadastro');
       } catch (err) { e.target.querySelector('.erro-form').textContent = err.message; }
+    };
+  }
+
+  // =============================================================
+  // SUGESTÕES (#/sugestao) — funciona com ou sem conta
+  // =============================================================
+  var TIPOS_MSG = [
+    ['sugestao', '💡', 'Ideia de melhoria'],
+    ['conteudo', '📚', 'Pedir uma aula ou trilha'],
+    ['problema', '🐞', 'Algo não funciona'],
+    ['elogio', '💜', 'Elogio']
+  ];
+  function telaSugestao() {
+    var tipo = 'sugestao', nota = 0;
+    var corpo = '<section class="sugestao">' +
+      '<h1>💬 Sua opinião</h1>' +
+      '<p class="nota">O CodeQuest é grátis e feito para você. Conte o que pode ficar melhor: cada mensagem é lida.</p>' +
+      '<form class="form-sugestao" novalidate>' +
+      '<fieldset><legend>Sobre o quê?</legend><div class="tipos-msg">' + TIPOS_MSG.map(function (t, i) {
+        return '<button type="button" class="tipo-msg' + (i === 0 ? ' sel' : '') + '" data-tipo="' + t[0] + '" aria-pressed="' + (i === 0) + '"><span>' + t[1] + '</span>' + esc(t[2]) + '</button>';
+      }).join('') + '</div></fieldset>' +
+      '<fieldset><legend>Quanto você está gostando do CodeQuest? <small>(opcional)</small></legend><div class="estrelas-nota" role="radiogroup">' + [1, 2, 3, 4, 5].map(function (n) {
+        return '<button type="button" class="estrela-nota" data-n="' + n + '" role="radio" aria-checked="false" aria-label="' + n + ' de 5">★</button>';
+      }).join('') + '</div></fieldset>' +
+      '<label>Sua mensagem<textarea name="texto" rows="5" maxlength="1500" required placeholder="Ex: queria uma trilha de TypeScript / a fase 12 de SQL está confusa / adorei o ranking"></textarea></label>' +
+      '<label>Quer resposta? Deixe um e-mail ou WhatsApp <small>(opcional)</small><input name="contato" maxlength="100" autocomplete="email"></label>' +
+      '<p class="erro-form" role="alert"></p>' +
+      '<button class="btn btn-grande" type="submit">Enviar</button>' +
+      '</form></section>';
+    if (estado.usuario) tela(corpo, 'sugestao-tela');
+    else {
+      $app.innerHTML = '<header class="topo"><a href="/" class="marca" aria-label="Início">Code<span>Quest</span></a></header><main class="tela sugestao-tela">' + corpo +
+        '<p class="nota"><a href="/">‹ Voltar ao site</a> · <a href="#/cadastro">Criar conta grátis</a></p></main>';
+      window.scrollTo(0, 0);
+    }
+    var form = $app.querySelector('.form-sugestao');
+    form.querySelectorAll('.tipo-msg').forEach(function (b) {
+      b.onclick = function () {
+        form.querySelectorAll('.tipo-msg').forEach(function (x) { x.classList.remove('sel'); x.setAttribute('aria-pressed', 'false'); });
+        b.classList.add('sel'); b.setAttribute('aria-pressed', 'true'); tipo = b.dataset.tipo;
+      };
+    });
+    var estrelas = form.querySelectorAll('.estrela-nota');
+    estrelas.forEach(function (b) {
+      b.onclick = function () {
+        nota = Number(b.dataset.n);
+        estrelas.forEach(function (x) { var on = Number(x.dataset.n) <= nota; x.classList.toggle('on', on); x.setAttribute('aria-checked', String(Number(x.dataset.n) === nota)); });
+      };
+    });
+    form.onsubmit = async function (e) {
+      e.preventDefault();
+      var btn = form.querySelector('button[type=submit]');
+      btn.disabled = true;
+      try {
+        await api('POST', '/sugestao', { tipo: tipo, nota: nota || null, texto: form.texto.value, contato: form.contato.value, pagina: document.referrer ? 'site' : 'app' });
+        form.innerHTML = '<div class="obrigado"><span class="ico-grande">🎉</span><h2>Recebido, obrigado!</h2><p>Sua mensagem ajuda a deixar o CodeQuest melhor para todo mundo.</p>' +
+          (estado.usuario ? '<a class="btn" href="#/">Voltar às trilhas</a>' : '<a class="btn" href="/">Voltar ao site</a>') + '</div>';
+      } catch (err) {
+        form.querySelector('.erro-form').textContent = err.message;
+        btn.disabled = false;
+      }
     };
   }
 
@@ -993,6 +1059,10 @@
     var trio = function (campo) { return 'hoje ' + fmt(P.hoje[campo]) + ' · 30 dias ' + fmt(P.d30[campo]); };
     var html = '<div class="admin-cab"><h1>Painel</h1><button class="btn btn-sec b-atualizar">↻ Atualizar</button></div>' +
       '<p class="nota">Números de hoje (' + d.hoje.split('-').reverse().join('/') + ') e dos últimos 7 e 30 dias. Os ganhos dos anúncios aparecem no <a href="https://adsense.google.com" target="_blank" rel="noopener">painel do AdSense</a>.</p>' +
+      '<h2 class="titulo-secao">Agora</h2><div class="tiles">' +
+      tile('🟢 Online agora', fmt(d.online.agora), fmt(d.online.logados) + ' com conta · ' + fmt(d.online.visitantes) + ' visitantes', 'Aparelhos com o site ou o app aberto nos últimos 5 minutos') +
+      (d.online.paginas.length ? '<div class="tile"><span class="tile-titulo">Onde estão agora</span><small>' + d.online.paginas.map(function (p) { return esc(p[0]) + ': <b>' + p[1] + '</b>'; }).join('<br>') + '</small></div>' : '') +
+      '</div>' +
       '<h2 class="titulo-secao">Pessoas</h2><div class="tiles">' +
       tile('Usuários cadastrados', fmt(T.usuarios), '+' + fmt(T.cadastrosHoje) + ' hoje · +' + fmt(T.cadastros7) + ' em 7 dias', 'Total de contas criadas') +
       tile('Visitantes únicos · 7 dias', fmt(P.d7.visitantes), trio('visitantes'), 'Aparelhos diferentes que abriram o site ou o app (com ou sem conta)') +
@@ -1038,7 +1108,7 @@
       d.recentes.map(function (u) { return '<tr><td>' + esc(u.avatar) + ' ' + esc(u.nome) + ' <small>@' + esc(u.usuario) + '</small></td><td>' + new Date(u.criadoEm).toLocaleDateString('pt-BR') + '</td><td>' + u.fases + '</td><td>' + fmt(u.xp) + '</td><td>' + (u.ultimoDia ? u.ultimoDia.split('-').reverse().join('/') : '—') + '</td></tr>'; }).join('') +
       '</tbody></table></div>' +
       '<p class="nota">Como contamos: cada aparelho recebe um código aleatório (sem nome, e-mail ou IP). Robôs de busca não entram na conta. Visualizações do próprio painel também não.</p>' +
-      '<h2 class="titulo-secao">Problemas reportados pelos alunos</h2><div class="avisos"><div class="carregando"><div class="spinner"></div></div></div>' +
+      '<h2 class="titulo-secao">Mensagens dos alunos</h2><p class="nota">Sugestões, pedidos de aulas, problemas e elogios (tela 💬) e os avisos do botão ⚑ dentro das fases.</p><div class="avisos"><div class="carregando"><div class="spinner"></div></div></div>' +
       '<h2 class="titulo-secao">Ferramentas</h2><div class="ferramentas">' +
       '<form class="f-usuario"><label>Nome de usuário<input name="usuario" autocapitalize="off" placeholder="ex: bia_estuda" required></label>' +
       '<div class="desafio-botoes"><button class="btn btn-sec" data-acao="senha" type="submit">🔑 Gerar senha provisória</button><button class="btn nok" data-acao="remover" type="submit">🗑 Remover usuário</button></div>' +
@@ -1079,23 +1149,43 @@
   }
 
   async function carregarAvisos(el) {
+    var NOMES = { sugestao: '💡 Ideia', conteudo: '📚 Pedido de aula', problema: '🐞 Problema', elogio: '💜 Elogio', aula: '⚑ Aviso numa fase' };
     try {
       var r = await api('GET', '/admin/feedback');
-      if (!r.lista.length) { el.innerHTML = '<p class="nota">Nenhum problema reportado. Os alunos avisam pelo botão ⚑ dentro das fases.</p>'; return; }
-      el.innerHTML = r.lista.map(function (f) {
-        var info = FASES[f.faseId];
-        return '<div class="aviso-item" data-id="' + esc(f._id) + '"><div><b>' + (info ? info.curso.icone + ' ' + esc(info.curso.nome) + ' · Fase ' + info.num + ': ' + esc(info.fase.titulo) : esc(f.faseId || 'geral')) + '</b>' +
-          (f.passo && f.passo !== 'licao' ? ' <small>(exercício ' + (Number(String(f.passo).split(':')[1]) + 1 || '?') + ')</small>' : f.passo === 'licao' ? ' <small>(lição)</small>' : '') +
-          '<p>' + esc(f.texto) + '</p><small>@' + esc(f.usuario) + ' · ' + new Date(f.em).toLocaleString('pt-BR') + '</small></div>' +
-          '<button class="btn btn-sec b-resolvido">✔ Resolvido</button></div>';
-      }).join('');
-      el.querySelectorAll('.b-resolvido').forEach(function (b) {
-        b.onclick = async function () {
-          var item = b.closest('.aviso-item');
-          await api('DELETE', '/admin/feedback/' + encodeURIComponent(item.dataset.id));
-          item.remove();
-        };
+      if (!r.lista.length) { el.innerHTML = '<p class="nota">Nenhuma mensagem ainda. Os alunos escrevem pela tela 💬 Sugestões (link no início, no perfil, no fim das fases e no rodapé do site) e pelo botão ⚑ dentro das fases.</p>'; return; }
+      var lista = r.lista.map(function (f) { f.tipo = f.tipo || 'aula'; return f; });
+      var cont = {}, notas = lista.filter(function (f) { return f.nota; });
+      lista.forEach(function (f) { cont[f.tipo] = (cont[f.tipo] || 0) + 1; });
+      var filtro = 'todos';
+      var resumo = '<div class="filtro-msgs" role="tablist"><button class="ativo" data-f="todos">Todas (' + lista.length + ')</button>' +
+        Object.keys(NOMES).filter(function (k) { return cont[k]; }).map(function (k) { return '<button data-f="' + k + '">' + NOMES[k] + ' (' + cont[k] + ')</button>'; }).join('') + '</div>' +
+        (notas.length ? '<p class="nota">Nota média: <b>' + (notas.reduce(function (t, f) { return t + f.nota; }, 0) / notas.length).toFixed(1).replace('.', ',') + ' ★</b> em ' + notas.length + ' avaliação(ões).</p>' : '');
+      el.innerHTML = resumo + '<div class="lista-msgs"></div>';
+      function desenhar() {
+        var box = el.querySelector('.lista-msgs');
+        box.innerHTML = lista.filter(function (f) { return filtro === 'todos' || f.tipo === filtro; }).map(function (f) {
+          var info = FASES[f.faseId];
+          var onde = f.tipo === 'aula' ? (info ? info.curso.icone + ' ' + esc(info.curso.nome) + ' · Fase ' + info.num + ': ' + esc(info.fase.titulo) : esc(f.faseId || 'geral')) +
+            (f.passo && f.passo !== 'licao' ? ' <small>(exercício ' + (Number(String(f.passo).split(':')[1]) + 1 || '?') + ')</small>' : f.passo === 'licao' ? ' <small>(lição)</small>' : '') : '';
+          return '<div class="aviso-item" data-id="' + esc(f._id) + '"><div><span class="selo-msg selo-' + esc(f.tipo) + '">' + (NOMES[f.tipo] || esc(f.tipo)) + '</span>' +
+            (f.nota ? ' <span class="nota-msg" aria-label="' + f.nota + ' de 5">' + '★★★★★'.slice(0, f.nota) + '<i>' + '★★★★★'.slice(f.nota) + '</i></span>' : '') +
+            (onde ? '<br><b>' + onde + '</b>' : '') +
+            '<p>' + esc(f.texto) + '</p><small>@' + esc(f.usuario) + ' · ' + new Date(f.em).toLocaleString('pt-BR') + (f.contato ? ' · contato: <b>' + esc(f.contato) + '</b>' : '') + '</small></div>' +
+            '<button class="btn btn-sec b-resolvido">✔ ' + (f.tipo === 'elogio' ? 'Lido' : 'Resolvido') + '</button></div>';
+        }).join('') || '<p class="nota">Nada aqui.</p>';
+        box.querySelectorAll('.b-resolvido').forEach(function (b) {
+          b.onclick = async function () {
+            var item = b.closest('.aviso-item');
+            await api('DELETE', '/admin/feedback/' + encodeURIComponent(item.dataset.id));
+            lista = lista.filter(function (f) { return f._id !== item.dataset.id; });
+            item.remove();
+          };
+        });
+      }
+      el.querySelectorAll('.filtro-msgs button').forEach(function (b) {
+        b.onclick = function () { filtro = b.dataset.f; el.querySelectorAll('.filtro-msgs button').forEach(function (x) { x.classList.toggle('ativo', x === b); }); desenhar(); };
       });
+      desenhar();
     } catch (e) { el.innerHTML = '<p class="nota">' + esc(e.message) + '</p>'; }
   }
 

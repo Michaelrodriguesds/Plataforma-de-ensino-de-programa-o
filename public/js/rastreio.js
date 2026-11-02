@@ -28,5 +28,15 @@
     } catch (e) {}
     if (window.gtag) window.gtag('event', 'page_view', { page_title: pagina, page_location: location.href });
   }
+  // A cada minuto, se a tela estiver aberta, avisa "ainda estou aqui"
+  // (é o que alimenta o "online agora" do painel; não conta como visita)
+  setInterval(function () {
+    if (document.visibilityState !== 'visible' || !ultima) return;
+    var token = null;
+    try { token = localStorage.getItem('cq_token'); } catch (e) {}
+    var cab = { 'Content-Type': 'application/json' };
+    if (token) cab.Authorization = 'Bearer ' + token;
+    try { fetch('/api/evento', { method: 'POST', headers: cab, body: JSON.stringify({ vid: idVisitante(), pagina: ultima, tipo: 'sinal' }), keepalive: true }).catch(function () {}); } catch (e) {}
+  }, 60000);
   window.cqRastrear = rastrear;
 })();
