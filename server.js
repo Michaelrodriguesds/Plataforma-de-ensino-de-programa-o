@@ -477,6 +477,7 @@ store.conectar().then(() => {
   else if (/scheme|must begin with|Invalid connection string|URI must include/i.test(m)) dica = 'A string precisa começar com mongodb+srv:// — copie de novo no Atlas: Connect → Drivers. Sem aspas e sem espaços.';
   else if (/bad auth|Authentication failed|auth/i.test(m)) dica = 'Usuário ou senha do banco errados. No Atlas: Database Access → Edit → Edit Password. Use uma senha só com letras e números e cole de novo na string.';
   else if (/unescaped|URI malformed|Password contains/i.test(m)) dica = 'A senha tem caractere especial (@ : / ? # % ). No Atlas, troque a senha por uma só com letras e números.';
+  else if (/EBADNAME|ENOTFOUND|querySrv/i.test(m)) dica = 'O endereço do cluster na string está errado ou tem um caractere a mais (aspas, espaço). O trecho depois do @ deve ser só algo como cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority — copie de novo no Atlas (Connect → Drivers).';
   else if (/timed out|Server selection|ENOTFOUND|querySrv|ECONNREFUSED|whitelist|SSL|TLS/i.test(m)) dica = 'O Atlas não deixou o servidor entrar. No Atlas: Network Access → Add IP Address → Allow access from anywhere (0.0.0.0/0). Confira também se o cluster não está pausado.';
   console.error('   👉 ' + dica);
   process.exit(1);

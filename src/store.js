@@ -304,7 +304,8 @@ class MongoStore {
 
 function criarStore() {
   // Tira espaços e aspas que às vezes vêm junto ao colar a string no Render ou no .env
-  const uri = String(process.env.MONGODB_URI || '').trim().replace(/^["'`]+|["'`]+$/g, '').trim();
+  // (aspas no meio também saem: nunca fazem parte de uma string válida do Atlas)
+  const uri = String(process.env.MONGODB_URI || '').trim().replace(/["'`\s]/g, '');
   if (uri) return new MongoStore(uri);
   return new ArquivoStore(process.env.ARQUIVO_DADOS || path.join(__dirname, '..', 'data', 'db.json'));
 }
