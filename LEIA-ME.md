@@ -1,5 +1,7 @@
 # 🎮 CodeQuest — aprenda programação jogando
 
+**No ar:** <https://codequest-yk2k.onrender.com> · Resumo para quem chega no GitHub: [`README.md`](README.md)
+
 Plataforma gamificada para aprender programação em português, no celular ou no notebook: **Python, JavaScript e Java** do zero até Orientação a Objetos, e a **carreira Full Stack** completa (HTML e CSS, React, Back-end com Node.js, SQL, Git e deploy).
 
 - **8 trilhas, 197 fases e 709 exercícios** de 5 tipos, todos com as respostas testadas automaticamente:
@@ -31,6 +33,7 @@ Plataforma gamificada para aprender programação em português, no celular ou n
 
 | Arquivo | Para quê |
 |---|---|
+| `README.md` | Apresentação do projeto (o que aparece na página do GitHub) |
 | **`LEIA-ME.md`** (este) | Visão geral, rodar no PC, colocar online, criar fases |
 | **`docs/GUIA-IMPLANTACAO-E-MONETIZACAO.md`** | Passo a passo completo: do zero até receber do AdSense |
 | `docs/mapa-codequest.html` | Mapa visual: onde estamos, passo a passo no Windows e fluxogramas (abra no navegador) |
@@ -392,7 +395,7 @@ Feito para estudar um pouquinho todo dia. Bons estudos! 🚀
 
 ### Como o projeto já está preparado
 
-- **Aulas abertas em `/aprender`**: o AdSense **não aprova** site em que o conteúdo fica atrás de login (o robô do Google não cria conta). São 76 páginas de aula com texto original, perfeitas para isso, e que também aparecem nas buscas do Google.
+- **Aulas abertas em `/aprender`**: o AdSense **não aprova** site em que o conteúdo fica atrás de login (o robô do Google não cria conta). São mais de 190 páginas de aula com texto original, perfeitas para isso, e que também aparecem nas buscas do Google.
 - **Anúncios só em pontos de pausa**: página de aula, início do app, fim de fase, fim da revisão, ranking e trilha. **Nunca** dentro dos exercícios, no login ou em telas de erro, porque as regras do Google proíbem anúncio em tela sem conteúdo e perto de botões (clique sem querer dá bloqueio de conta).
 - **Política de privacidade** com o texto que o Google exige sobre cookies de terceiros, **termos de uso**, **sobre/contato**, **`ads.txt`** gerado sozinho e **`sitemap.xml`** para o Google achar todas as páginas.
 - **Aviso de cookies (LGPD)**: quem escolhe "Só o essencial" recebe anúncios não personalizados.
