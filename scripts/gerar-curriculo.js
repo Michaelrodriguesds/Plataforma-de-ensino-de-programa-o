@@ -9,7 +9,7 @@ const tipos = { quiz: 'pergunta', prever: 'prever', completar: 'completar', mont
 let total = 0, totalEx = 0;
 let md = '# Currículo do CodeQuest\n\n> Arquivo gerado automaticamente por `npm run curriculo`. Não edite à mão.\n\n';
 const resumo = [];
-for (const id of ['python', 'javascript', 'java']) {
+for (const id of ['python', 'javascript', 'java', 'htmlcss', 'react', 'backend', 'sql', 'git']) {
   const c = cursos[id];
   if (!c) continue;
   let n = 0, ex = 0;

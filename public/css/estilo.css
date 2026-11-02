@@ -556,3 +556,40 @@ body:has(.jogo) .aviso-cookies { top: 12px; bottom: auto; }
 .exercicio h1, .enunciado, .licao .texto, .feedback, .pub-cartao .texto, .pub-pergunta { overflow-wrap: anywhere; }
 .exercicio h1 code, .texto code, .enunciado code, .feedback code { white-space: normal; word-break: break-word; }
 .jogo, .tela { max-width: 100vw; overflow-x: clip; }
+
+/* ---------- Carreira Full Stack (v1.3) ---------- */
+.secao-sub { color: var(--texto-2); margin: -4px 0 12px; font-size: .95rem; max-width: 62ch; }
+.mapa-fs { list-style: none; margin: 0 0 16px; padding: 0; display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; counter-reset: fs; }
+.mapa-fs li { flex: 1 0 104px; min-width: 104px; position: relative; }
+.mapa-fs li + li::before { content: ""; position: absolute; left: -8px; top: 26px; width: 8px; border-top: 2px dotted var(--linha); }
+.mapa-fs a { display: grid; justify-items: center; gap: 2px; text-align: center; padding: 10px 6px; border-radius: 12px; background: var(--noite-2); border: 1px solid var(--linha); color: var(--texto); text-decoration: none; height: 100%; }
+.mapa-fs a:hover { border-color: var(--cor); }
+.mapa-fs .mfs-num { font: 700 .75rem var(--fonte-titulo); width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--painel); color: var(--texto-2); }
+.mapa-fs li.atual .mfs-num { background: var(--cor); color: #17153B; }
+.mapa-fs li.feita .mfs-num { background: var(--certo); color: #17153B; }
+.mapa-fs .mfs-ico { font-size: 1.4rem; line-height: 1.2; }
+.mapa-fs b { font-size: .82rem; line-height: 1.2; }
+.mapa-fs small { font-size: .74rem; color: var(--texto-3); font-variant-numeric: tabular-nums; }
+
+/* Tabelas do SQL */
+.tabela-rolar { overflow-x: auto; margin: 8px 0; border-radius: 10px; border: 1px solid var(--linha); }
+.tabela-sql { border-collapse: collapse; width: 100%; font: .86rem var(--fonte-codigo); background: #08071C; }
+.tabela-sql caption { text-align: left; padding: 6px 10px; font: 700 .85rem var(--fonte-texto); color: var(--texto-2); background: var(--noite-2); caption-side: top; }
+.tabela-sql th, .tabela-sql td { padding: 5px 10px; border-bottom: 1px solid var(--linha); text-align: left; white-space: nowrap; }
+.tabela-sql th { color: var(--estrela); font-weight: 700; background: var(--noite-2); }
+.tabela-sql th small { display: block; font-weight: 400; color: var(--texto-3); font-size: .7rem; }
+.tabela-sql td.nulo { color: var(--texto-3); font-style: italic; }
+.tabela-sql tr:last-child td { border-bottom: 0; }
+.bloco-banco .banco-tabelas { display: grid; gap: 6px; }
+
+/* Terminal */
+pre.terminal, .saida pre.terminal { background: #0B0A16; color: #E6E3FF; border: 1px solid var(--linha); border-radius: 10px; padding: 12px 14px; white-space: pre-wrap; word-break: break-word; font: .86rem/1.5 var(--fonte-codigo); margin: 0; }
+
+/* Prévia maior para as páginas da trilha HTML e CSS */
+.previa-alta iframe { height: 280px; resize: vertical; }
+/* Site público: caminho Full Stack */
+.pub-fs { list-style: none; counter-reset: fs; padding: 0; margin: 12px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.pub-fs li { counter-increment: fs; display: flex; align-items: center; gap: 8px; background: var(--noite-2); border: 1px solid var(--linha); border-left: 4px solid var(--cor); border-radius: 10px; padding: 8px 12px; }
+.pub-fs li::before { content: counter(fs); font: 700 .8rem var(--fonte-titulo); color: var(--texto-3); }
+.pub-fs a { color: var(--texto); font-weight: 700; text-decoration: none; }
+.pub-fs small { color: var(--texto-3); font-size: .78rem; }

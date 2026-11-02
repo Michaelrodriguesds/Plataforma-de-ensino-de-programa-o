@@ -1,0 +1,6 @@
+# Guarda os arquivos de texto com quebra de linha LF (padrão Linux) no Git.
+# No Windows, o Git converte sozinho; isto evita os avisos "LF will be replaced by CRLF".
+* text=auto eol=lf
+*.wasm binary
+*.png binary
+*.jpg binary

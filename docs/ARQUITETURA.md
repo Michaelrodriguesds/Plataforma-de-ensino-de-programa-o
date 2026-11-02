@@ -12,6 +12,11 @@ Navegador (celular/PC)                         Servidor (Node + Express)        
    │  JS     → Web Worker (runtime/worker-js.js)
    │  DOM    → Web Worker + linkedom (runtime/worker-dom.js)
    │  Python → Web Worker + Pyodide (runtime/worker-py.js, baixa da CDN jsDelivr)
+   │  HTML/CSS → Web Worker + linkedom + csshelp.js (runtime/worker-html.js)
+   │  SQL    → Web Worker + sql.js/SQLite (runtime/worker-sql.js, runtime/sql/)
+   │  Node   → Web Worker + Node simulado (runtime/worker-node.js + nodesim.js)
+   │  React  → Web Worker + Preact + sucrase (runtime/worker-react.js + reactlib.js)
+   │  Terminal → Web Worker + bash/Git simulados (runtime/worker-terminal.js + terminal.js)
    │  Java   ─────── POST /api/executar/java ──► src/javaRunner.js (javac/java)
    │
    └── fetch /api/... ───────────────────────► server.js ─► src/jogo.js (regras)  ─► src/store.js ─► MongoDB
@@ -31,6 +36,12 @@ Navegador (celular/PC)                         Servidor (Node + Express)        
 | `public/js/conteudo/*.js` | **O conteúdo dos cursos.** Lido pelo navegador e pelo servidor |
 | `public/js/app.js` | Todas as telas do app (roteador por `#`) |
 | `public/js/runtime/` | Executores que rodam nos Web Workers e no validador |
+| `public/js/runtime/csshelp.js` | Calcula o CSS de um elemento (cascata, herança, var(), @media) e as ferramentas `texto/existe/quantos/atributo/estilo` |
+| `public/js/runtime/sqlexec.js` | Roda SQL e formata o resultado (`a \| b`); `sql/` tem o sql.js |
+| `public/js/runtime/nodesim.js` | Node simulado: express, http, mongodb, bcryptjs, jsonwebtoken, cors, dotenv, crypto, path, fs e `fetch` |
+| `public/js/runtime/reactprep.js` | Prepara o código React (tira imports, traduz JSX) e cria `renderizar`, `clicar`, `digitar`, `escolher`, `enviar`, `esperar` e um `fetch` falso |
+| `public/js/runtime/reactlib.js` | Preact + preact/compat + test-utils + sucrase (gerado por `npm run build:react`) |
+| `public/js/runtime/terminal.js` | Terminal simulado: pastas, Git, "GitHub", npm e node |
 | `public/js/editor.js`, `realce.js` | Editor de código e cores |
 | `public/js/erros.js` | Tradução das mensagens de erro |
 | `public/js/anuncios.js`, `consentimento.js`, `rastreio.js` | AdSense, aviso de cookies e contagem de visitas |
@@ -60,14 +71,34 @@ Campos de exercício:
 | `resp` | completar | Respostas aceitas por lacuna (texto ou lista de textos) |
 | `linhas`, `extras` | montar | Ordem certa e linhas "pegadinha" |
 | `inicio`, `saida`, `sol`, `dicas` | codigo | Código inicial, saída esperada, solução e dicas |
-| `teste` | codigo | Código acrescentado ao do aluno (Java: vira o `main`) |
+| `teste` | codigo (e completar, montar, prever, lição) | Código acrescentado ao do aluno (Java: vira o `main`; HTML: JavaScript que olha a página; terminal: comandos cuja saída é conferida) |
 | `testes` | codigo | Vários `{ entrada, saida }` |
 | `usar` | codigo | `[regex, mensagem]`: obriga a usar algo (ex: `for`) |
 | `entrada` | vários | O que seria "digitado" (`input`, `prompt`, `Scanner`) |
-| `dom` | JS | HTML da página para exercícios de DOM |
+| `dom` | JS, React | HTML da página para exercícios de DOM (no React, o padrão é `<div id="root">`) |
+| `banco` | SQL | SQL que cria as tabelas antes do código do aluno. Pode ficar no exercício, na fase ou na trilha |
+| `pasta` | terminal | Comandos rodados antes, em silêncio (o cenário). Exercício ou fase |
+| `api` | React | O que o `fetch` responde: `{ "/api/servicos": [...] }`. Exercício ou fase |
+| `previa` | HTML (quiz) | Mostrar a página desenhada junto da pergunta |
+| `erroEsperado` | lição | O exemplo da lição deve dar erro de propósito |
 | `saidaReal`, `erro` | prever | Saída real quando difere da alternativa, ou "deve dar erro" |
 
 Depois de editar: `npm run validar` e `npm run curriculo`.
+
+### Trilhas e arquivos de conteúdo
+
+| Trilha (`id`) | `ling` | Arquivos |
+|---|---|---|
+| `python` | python | `python.js` |
+| `javascript` | javascript | `javascript.js` |
+| `java` | java | `java.js` |
+| `htmlcss` | html | `htmlcss-1.js`, `htmlcss-2.js` |
+| `react` | react | `react.js` |
+| `backend` | node | `backend-1.js`, `backend-2.js` |
+| `sql` | sql | `sql.js` |
+| `git` | terminal | `git.js` |
+
+Os arquivos são lidos em **ordem alfabética** (por isso as partes têm `-1` e `-2`). O servidor coloca um `<script>` para cada um no app. A ordem das trilhas na tela fica em `ORDEM` (`app.js` e `src/paginas.js`) e a Carreira Full Stack em `FULLSTACK` (`app.js`, `paginas.js` e `src/jogo.js`).
 
 ## Como o código do aluno é comparado
 

@@ -1,13 +1,24 @@
 # 🎮 CodeQuest — aprenda programação jogando
 
-Plataforma gamificada para aprender **Python, JavaScript e Java** do zero até Orientação a Objetos, em português, no celular ou no notebook.
+Plataforma gamificada para aprender programação em português, no celular ou no notebook: **Python, JavaScript e Java** do zero até Orientação a Objetos, e a **carreira Full Stack** completa (HTML e CSS, React, Back-end com Node.js, SQL, Git e deploy).
 
-- **103 fases** (33 de Python, 37 de JavaScript, 33 de Java), do primeiro `print` à Orientação a Objetos e ao nível avançado
-- **409 exercícios** de 5 tipos, todos com as respostas testadas automaticamente
-- JavaScript inclui um mundo inteiro de **páginas web (DOM)**: eventos, formulários e um projeto de lista de tarefas
+- **8 trilhas, 197 fases e 709 exercícios** de 5 tipos, todos com as respostas testadas automaticamente:
+
+  | Trilha | Fases | O que roda |
+  |---|---|---|
+  | 🐍 Python | 33 | Python de verdade no navegador (Pyodide) |
+  | 🟨 JavaScript (com páginas web/DOM) | 37 | no navegador |
+  | ☕ Java | 33 | no servidor (javac) |
+  | 🎨 HTML e CSS | 22 | a página do aluno, desenhada de verdade, e um verificador de CSS |
+  | ⚛️ React | 16 | Preact + JSX num Web Worker |
+  | 🟩 Back-end com Node.js | 20 | um Node "de treino" com Express, MongoDB, bcrypt e JWT |
+  | 🗄️ SQL e Bancos de Dados | 20 | SQLite de verdade (sql.js) |
+  | 🌿 Git, Terminal e Deploy | 16 | um terminal de treino com Git, npm e "GitHub" |
+
+- A **Carreira Full Stack** tem um mapa na tela inicial: HTML e CSS → JavaScript → React → Back-end → SQL → Git e deploy
 - Cadastro, XP, níveis, estrelas, ofensiva (dias seguidos), conquistas, **ranking semanal e geral**
 - **Revisão espaçada**: o que você aprendeu volta em 1, 3, 7, 14, 30 e 60 dias
-- Código roda de verdade: JavaScript e Python **dentro do navegador**, Java **no servidor**
+- Código roda de verdade: quase tudo **dentro do navegador** (nada sai do aparelho); só o Java roda **no servidor**
 - Funciona como aplicativo no celular (dá para "Adicionar à tela inicial")
 - **Grátis para quem estuda, sem certificado**, mantido por **anúncios do Google (AdSense)**
 - **Site público com todas as aulas abertas** (para o Google aprovar o AdSense e trazer visitas pela busca)
@@ -21,6 +32,7 @@ Plataforma gamificada para aprender **Python, JavaScript e Java** do zero até O
 |---|---|
 | **`LEIA-ME.md`** (este) | Visão geral, rodar no PC, colocar online, criar fases |
 | **`docs/GUIA-IMPLANTACAO-E-MONETIZACAO.md`** | Passo a passo completo: do zero até receber do AdSense |
+| `docs/mapa-codequest.html` | Mapa visual: onde estamos, passo a passo no Windows e fluxogramas (abra no navegador) |
 | `docs/CURRICULO.md` | Lista de todas as fases (gerada por `npm run curriculo`) |
 | `docs/ARQUITETURA.md` | Como o código funciona por dentro |
 | `docs/DECISOES.md` | Por que cada coisa foi feita do jeito que foi |

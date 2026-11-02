@@ -7,7 +7,12 @@
 | 🐍 Python | 5 | 33 | 139 |
 | 🟨 JavaScript | 6 | 37 | 153 |
 | ☕ Java | 5 | 33 | 117 |
-| **Total** | | **103** | **409** |
+| 🎨 HTML e CSS | 5 | 22 | 83 |
+| ⚛️ React | 3 | 16 | 44 |
+| 🟩 Back-end com Node.js | 4 | 20 | 62 |
+| 🗄️ SQL e Bancos de Dados | 4 | 20 | 63 |
+| 🌿 Git, Terminal e Deploy | 4 | 16 | 48 |
+| **Total** | | **197** | **709** |
 
 ## 🐍 Python
 
@@ -235,4 +240,258 @@ Generics, lambdas, streams, recursão e o chefão final.
 | 31 | `java-24` | 🪆 Recursão e algoritmos | Recursão: a boneca russa · Busca binária | 1 prever, 2 código |
 | 32 | `java-33` | 📅 Optional e datas | Optional: a caixa que pode estar vazia · Datas com java.time | 1 prever, 1 pergunta, 1 código |
 | 33 | `java-25` | 👑 Chefão: Sistema do salão | Juntando tudo | 1 código |
+
+## 🎨 HTML e CSS
+
+O começo de todo site: HTML monta a estrutura e o CSS deixa bonito. Do primeiro título ao layout responsivo.
+
+### Mundo 1: A estrutura da página
+
+Etiquetas, títulos, links, imagens, listas e tabelas.
+
+| Fase | Id | Título | Lição | Exercícios |
+|---|---|---|---|---|
+| 1 | `hc-01` | 📄 Sua primeira página | O que é HTML · O esqueleto completo | 2 pergunta, 1 completar, 1 montar, 1 código |
+| 2 | `hc-02` | 🔠 Títulos e textos | Títulos em níveis · Destaques e quebras | 2 pergunta, 1 completar, 1 código |
+| 3 | `hc-03` | 🔗 Links e imagens | Atributos: informações extras · Imagens | 2 pergunta, 1 completar, 1 código |
+| 4 | `hc-04` | 📋 Listas | Com bolinha ou com número · Lista dentro de lista | 2 pergunta, 1 montar, 1 código |
+| 5 | `hc-05` | 🧮 Tabelas | Dados em linhas e colunas | 2 pergunta, 1 completar, 1 código |
+| 6 | `hc-06` | 👑 Chefão: o site do salão | Juntando tudo | 1 código, 1 pergunta |
+
+### Mundo 2: Formulários e significado
+
+Receber dados das pessoas e escrever HTML que o Google e todo mundo entendem.
+
+| Fase | Id | Título | Lição | Exercícios |
+|---|---|---|---|---|
+| 7 | `hc-07` | 📝 Formulários | Campos para a pessoa preencher · label + id: o par perfeito | 2 pergunta, 1 completar, 1 código |
+| 8 | `hc-08` | ☑️ Mais campos | Escolhas · Validação sem programar | 3 pergunta, 1 código |
+| 9 | `hc-09` | 🧭 HTML com significado | Caixas com nome · E a div? | 2 pergunta, 1 montar, 1 código |
+| 10 | `hc-10` | ♿ Acessível e encontrável | Para todo mundo usar · O head que o Google lê | 3 pergunta, 1 código |
+
+### Mundo 3: CSS: cores, textos e caixas
+
+Dar cara ao site: cores, fontes, espaços e bordas.
+
+| Fase | Id | Título | Lição | Exercícios |
+|---|---|---|---|---|
+| 11 | `hc-11` | 🖌️ Seu primeiro CSS | HTML é o esqueleto, CSS é a roupa · As primeiras propriedades | 2 pergunta, 1 completar, 1 código |
+| 12 | `hc-12` | 🎯 Seletores | Escolhendo quem vai mudar · Quando duas regras brigam | 3 pergunta, 1 código |
+| 13 | `hc-13` | ✒️ Textos e fontes | Deixando o texto gostoso de ler · Unidades: px, rem e % | 2 pergunta, 1 completar, 1 código |
+| 14 | `hc-14` | 📦 O modelo de caixa | Tudo é uma caixa · Atalhos e box-sizing | 3 pergunta, 1 código |
+| 15 | `hc-15` | 🌈 Cores e variáveis | Como funcionam os códigos de cor · Variáveis: mude a cor do site inteiro de uma vez | 2 pergunta, 1 completar, 1 código |
+
+### Mundo 4: Layout
+
+Colocar as coisas lado a lado, em grade, e fazer caber no celular.
+
+| Fase | Id | Título | Lição | Exercícios |
+|---|---|---|---|---|
+| 16 | `hc-16` | 🧱 display e position | Bloco ou na linha? · position | 3 pergunta, 1 código |
+| 17 | `hc-17` | ↔️ Flexbox | Lado a lado sem sofrimento · O truque de centralizar | 2 pergunta, 1 completar, 1 código |
+| 18 | `hc-18` | 🃏 Flexbox na prática | Cards que se ajeitam | 2 pergunta, 1 código |
+| 19 | `hc-19` | 🔲 CSS Grid | Uma grade de verdade · Colunas que se adaptam sozinhas | 2 pergunta, 1 completar, 1 código |
+| 20 | `hc-20` | 📱 Responsivo | Um site, todas as telas · Testando no computador | 2 pergunta, 1 código |
+
+### Mundo 5: Acabamento profissional
+
+Interação, transições e o projeto final.
+
+| Fase | Id | Título | Lição | Exercícios |
+|---|---|---|---|---|
+| 21 | `hc-21` | ✨ Estados e transições | Quando o mouse passa · Mudanças suaves | 3 pergunta, 1 código |
+| 22 | `hc-22` | 👑 Chefão: a landing page | O projeto final | 1 código, 1 pergunta |
+
+## ⚛️ React
+
+A biblioteca mais usada para criar interfaces: componentes, estado, eventos e dados vindos da API.
+
+### Mundo 1: Componentes
+
+Montar telas com peças reutilizáveis.
+
+| Fase | Id | Título | Lição | Exercícios |
+|---|---|---|---|---|
+| 1 | `re-01` | ⚛️ O que é React | Telas feitas de peças · Um componente é uma função · No seu computador | 2 pergunta, 1 código |
+| 2 | `re-02` | 🧬 JSX por dentro | JavaScript entre chaves · Estilo no JSX | 2 pergunta, 1 prever, 1 código |
+| 3 | `re-03` | 🎁 Props | Passando informações para o componente · children e valores padrão | 2 pergunta, 1 completar, 1 código |
+| 4 | `re-04` | 📜 Listas e keys | map: um elemento para cada item · filter + map | 1 pergunta, 1 prever, 1 código |
+| 5 | `re-05` | 🎭 Mostrar ou esconder | Renderização condicional | 1 prever, 1 pergunta, 1 código |
+
+### Mundo 2: Estado e eventos
+
+Telas que reagem: cliques, formulários e listas que mudam.
+
+| Fase | Id | Título | Lição | Exercícios |
+|---|---|---|---|---|
+| 6 | `re-06` | 🔄 useState | A memória do componente · Regras dos hooks | 1 pergunta, 1 prever, 1 código |
+| 7 | `re-07` | 👆 Eventos | onClick, onChange e companhia | 1 pergunta, 1 código |
+| 8 | `re-08` | 📝 Formulários controlados | O campo e o estado andam juntos · Enviando | 1 pergunta, 1 completar, 1 código |
+| 9 | `re-09` | 🧺 Arrays e objetos no estado | Nunca mude, sempre crie um novo | 2 pergunta, 1 código |
+| 10 | `re-10` | 👑 Chefão: lista de tarefas | O clássico, agora em React | 1 código |
+
+### Mundo 3: Apps de verdade
+
+Componentes conversando, efeitos, dados da API e contexto.
+
+| Fase | Id | Título | Lição | Exercícios |
+|---|---|---|---|---|
+| 11 | `re-11` | ⬆️ Elevando o estado | Dois componentes, um dado | 1 pergunta, 1 código |
+| 12 | `re-12` | 🪝 useEffect | Efeitos colaterais · Limpando | 1 pergunta, 1 prever, 1 código |
+| 13 | `re-13` | 📡 Buscando dados da API | O front conversando com o back | 2 pergunta, 1 código |
+| 14 | `re-14` | 🧮 Valores calculados e useRef | Nem tudo precisa ser estado · useRef | 2 pergunta, 1 código |
+| 15 | `re-15` | 🌐 Context | Dados para o app inteiro | 1 pergunta, 1 código |
+| 16 | `re-16` | 👑 Chefão: agenda do salão | Um app de verdade | 1 código, 1 pergunta |
+
+## 🟩 Back-end com Node.js
+
+O lado do servidor: APIs com Express, rotas, banco MongoDB, senhas e login com JWT.
+
+### Mundo 1: Como a web conversa
+
+Cliente, servidor, HTTP e o seu primeiro servidor.
+
+| Fase | Id | Título | Lição | Exercícios |
+|---|---|---|---|---|
+| 1 | `be-01` | 🛰️ Cliente e servidor | Pedido e resposta · O que vai num pedido HTTP · Um servidor de verdade | 3 pergunta, 1 código |
+| 2 | `be-02` | 📦 Node.js e módulos | JavaScript fora do navegador · require e module.exports | 2 pergunta, 1 completar, 1 código |
+| 3 | `be-03` | 🚂 Primeiro servidor Express | Express: o garçom organizado · No seu computador | 2 pergunta, 1 montar, 1 código |
+| 4 | `be-04` | 🧩 Respondendo com JSON | A língua das APIs · Escolhendo o status | 1 pergunta, 1 prever, 1 código |
+
+### Mundo 2: API REST
+
+Criar, ler, alterar e apagar: o CRUD que todo sistema tem.
+
+| Fase | Id | Título | Lição | Exercícios |
+|---|---|---|---|---|
+| 5 | `be-05` | 🆔 Rotas com parâmetros | Um pedaço da URL que muda · Por que o return? | 1 pergunta, 1 prever, 1 código |
+| 6 | `be-06` | 🔎 Filtros com query | req.query | 2 pergunta, 1 código |
+| 7 | `be-07` | 📮 POST e req.body | Recebendo dados · O fetch com POST | 2 pergunta, 1 completar, 1 código |
+| 8 | `be-08` | ♻️ PUT, PATCH e DELETE | O CRUD completo · Na prática | 2 pergunta, 1 código |
+| 9 | `be-09` | 🛡️ Validação e erros | Nunca confie no cliente | 2 pergunta, 1 código |
+| 10 | `be-10` | 👑 Chefão: API de agendamentos | Uma API inteira | 1 código |
+
+### Mundo 3: Organizando o servidor
+
+Middlewares, rotas separadas, erros e configurações.
+
+| Fase | Id | Título | Lição | Exercícios |
+|---|---|---|---|---|
+| 11 | `be-11` | 🧅 Middlewares | O caminho do pedido · Middleware só em algumas rotas | 2 pergunta, 1 prever, 1 código |
+| 12 | `be-12` | 🗃️ Rotas organizadas | express.Router · Uma estrutura de pastas comum | 1 pergunta, 1 completar, 1 código |
+| 13 | `be-13` | 🧯 Tratando erros | O middleware de erro · Erros com status | 2 pergunta, 1 código |
+| 14 | `be-14` | ⚙️ Configurações e CORS | Variáveis de ambiente · CORS | 2 pergunta, 1 código |
+
+### Mundo 4: Banco de dados e segurança
+
+Guardar de verdade no MongoDB, proteger senhas e fazer login.
+
+| Fase | Id | Título | Lição | Exercícios |
+|---|---|---|---|---|
+| 15 | `be-15` | 🍃 MongoDB: guardando dados | Por que um banco? · Conectar e inserir | 2 pergunta, 1 completar, 1 código |
+| 16 | `be-16` | 🔁 MongoDB: buscar e alterar | Buscando com filtros · Alterando e apagando | 1 pergunta, 1 prever, 1 código |
+| 17 | `be-17` | 🔌 API com MongoDB | Juntando Express e banco | 2 pergunta, 1 código |
+| 18 | `be-18` | 🔐 Senhas com bcrypt | Nunca guarde a senha | 2 pergunta, 1 código |
+| 19 | `be-19` | 🎫 Login com JWT | O crachá digital · O porteiro | 2 pergunta, 1 código |
+| 20 | `be-20` | 👑 Chefão: API com login | Tudo junto | 1 código |
+
+## 🗄️ SQL e Bancos de Dados
+
+Onde os sistemas guardam tudo: clientes, vendas, agendamentos. Consultar, resumir, juntar e criar tabelas com SQL.
+
+### Mundo 1: Consultando dados
+
+Pedir ao banco exatamente o que você quer ver.
+
+| Fase | Id | Título | Lição | Exercícios |
+|---|---|---|---|---|
+| 1 | `sql-01` | 🔍 Sua primeira consulta | Banco de dados é um armário de planilhas · SELECT ... FROM ... | 2 pergunta, 1 prever, 1 código |
+| 2 | `sql-02` | 🧾 Colunas, apelidos e contas | Apelidos com AS · Contas no SELECT | 2 prever, 1 completar, 1 código |
+| 3 | `sql-03` | 🧹 Filtrando com WHERE | Só as linhas que interessam · AND, OR e NOT | 1 pergunta, 1 prever, 1 completar, 1 código |
+| 4 | `sql-04` | 🔎 Filtros espertos | IN, BETWEEN e LIKE · O vazio: NULL | 1 pergunta, 1 prever, 1 completar, 1 código |
+| 5 | `sql-05` | 🔢 Ordenando e limitando | ORDER BY · LIMIT e DISTINCT | 1 prever, 1 pergunta, 1 montar, 1 código |
+
+### Mundo 2: Resumindo dados
+
+Contar, somar e tirar médias: os relatórios que todo negócio pede.
+
+| Fase | Id | Título | Lição | Exercícios |
+|---|---|---|---|---|
+| 6 | `sql-06` | ➕ Contar, somar e média | Funções de agregação · Arredondando | 1 prever, 1 pergunta, 1 completar, 1 código |
+| 7 | `sql-07` | 🗂️ Agrupando com GROUP BY | Uma conta para cada grupo | 1 prever, 1 pergunta, 1 código |
+| 8 | `sql-08` | 🎛️ HAVING: filtrando grupos | WHERE filtra linhas, HAVING filtra grupos | 1 pergunta, 1 prever, 1 código |
+| 9 | `sql-09` | 📅 Textos, datas e CASE | Funções de texto · Datas e CASE | 2 prever, 1 completar, 1 código |
+| 10 | `sql-10` | 👑 Chefão: o relatório do mês | A dona do salão pediu números | 2 código |
+
+### Mundo 3: Juntando tabelas
+
+Chaves, JOIN e subconsultas: o "relacional" do banco relacional.
+
+| Fase | Id | Título | Lição | Exercícios |
+|---|---|---|---|---|
+| 11 | `sql-11` | 🔑 Chaves e relacionamentos | Por que tantas tabelas? | 2 pergunta, 1 prever |
+| 12 | `sql-12` | 🔗 INNER JOIN | Juntando duas tabelas · Apelidos de tabela | 1 pergunta, 1 completar, 1 código |
+| 13 | `sql-13` | ⬅️ LEFT JOIN | Quem não tem par também aparece | 1 pergunta, 1 prever, 1 código |
+| 14 | `sql-14` | 📊 JOIN com GROUP BY | Relatórios de verdade | 1 prever, 1 código |
+| 15 | `sql-15` | 🪆 Subconsultas | Uma consulta dentro da outra | 1 prever, 1 código |
+
+### Mundo 4: Criando e alterando
+
+Criar tabelas, inserir, atualizar e apagar com segurança.
+
+| Fase | Id | Título | Lição | Exercícios |
+|---|---|---|---|---|
+| 16 | `sql-16` | 🏗️ CREATE TABLE | Desenhando uma tabela · Conferindo a estrutura | 2 pergunta, 1 código |
+| 17 | `sql-17` | 📥 INSERT | Colocando linhas | 1 pergunta, 1 completar, 1 código |
+| 18 | `sql-18` | ✏️ UPDATE e DELETE | Mudando com cuidado · Apagando | 1 pergunta, 1 prever, 1 código |
+| 19 | `sql-19` | 🕸️ Relacionamentos | FOREIGN KEY: o banco cuidando de você · Quando o banco diz não | 2 pergunta, 1 código |
+| 20 | `sql-20` | 👑 Chefão: o sistema de entregas | Modelando do zero | 2 código |
+
+## 🌿 Git, Terminal e Deploy
+
+As ferramentas de todo dia de quem programa: terminal, Git, GitHub, npm e colocar o projeto no ar.
+
+### Mundo 1: O terminal
+
+Conversar com o computador por texto.
+
+| Fase | Id | Título | Lição | Exercícios |
+|---|---|---|---|---|
+| 1 | `git-01` | 🖥️ Abrindo o terminal | Por que usar texto? · Onde estou? O que tem aqui? | 2 pergunta, 1 prever, 1 código |
+| 2 | `git-02` | 🗂️ Pastas e arquivos | Criar, ver, mover, apagar · Atalhos que salvam tempo | 1 pergunta, 1 prever, 1 montar, 1 código |
+| 3 | `git-03` | 🧭 Caminhos | Endereços de arquivos · Arquivos escondidos | 2 pergunta, 1 código |
+
+### Mundo 2: Git: salvando versões
+
+Nunca mais perder código nem ter "site-final-agora-vai.zip".
+
+| Fase | Id | Título | Lição | Exercícios |
+|---|---|---|---|---|
+| 4 | `git-04` | 🌱 O que é Git | Uma máquina do tempo para o código · git status: o comando mais usado | 2 pergunta, 1 código |
+| 5 | `git-05` | 📸 add e commit | As três áreas · Boas mensagens | 1 pergunta, 1 prever, 1 completar, 1 código |
+| 6 | `git-06` | 🕰️ Histórico e diferenças | git log · O que mudou? E como desfazer? | 2 pergunta, 1 código |
+| 7 | `git-07` | 🙈 .gitignore | O que NÃO vai para o Git | 2 pergunta, 1 código |
+| 8 | `git-08` | 👑 Chefão: projeto versionado | Do zero ao histórico | 1 código |
+
+### Mundo 3: Branches e GitHub
+
+Trabalhar em paralelo, juntar e compartilhar o código.
+
+| Fase | Id | Título | Lição | Exercícios |
+|---|---|---|---|---|
+| 9 | `git-09` | 🌿 Branches | Linhas paralelas · Juntando: merge | 1 pergunta, 1 prever, 1 código |
+| 10 | `git-10` | ⚔️ Conflitos | Quando dois mexem no mesmo lugar | 2 pergunta, 1 código |
+| 11 | `git-11` | 🐙 GitHub e push | Seu código na nuvem · O dia a dia | 2 pergunta, 1 montar, 1 código |
+| 12 | `git-12` | 🤝 Trabalho em equipe | clone, pull e push · Pull requests | 2 pergunta, 1 código |
+
+### Mundo 4: npm e deploy
+
+Pacotes, configurações e colocar o projeto no ar.
+
+| Fase | Id | Título | Lição | Exercícios |
+|---|---|---|---|---|
+| 13 | `git-13` | 📦 npm e package.json | O "mercado" de pacotes · Scripts | 2 pergunta, 1 código |
+| 14 | `git-14` | 🔑 Variáveis de ambiente | Configuração fora do código | 1 pergunta, 1 código |
+| 15 | `git-15` | 🚀 Colocando no ar | O que é deploy · O checklist do deploy | 3 pergunta, 1 montar |
+| 16 | `git-16` | 👑 Chefão: do zero ao GitHub | O ciclo completo | 1 código |
 

@@ -12,7 +12,10 @@
 (function () {
   'use strict';
   var CURSOS = window.CURSOS || {};
-  var ORDEM = ['python', 'javascript', 'java'].filter(function (c) { return CURSOS[c]; });
+  var ORDEM = ['python', 'javascript', 'java', 'htmlcss', 'react', 'backend', 'sql', 'git'].filter(function (c) { return CURSOS[c]; });
+  // A "Carreira Full Stack": a ordem recomendada para virar desenvolvedor web completo
+  var FULLSTACK = ['htmlcss', 'javascript', 'react', 'backend', 'sql', 'git'].filter(function (c) { return CURSOS[c]; });
+  var LINGUAGENS = ['python', 'javascript', 'java'].filter(function (c) { return CURSOS[c]; });
   var $app = document.getElementById('app');
   var E = window.cqEfeitos;
   var estado = { usuario: null, meta: null };
@@ -29,6 +32,57 @@
   function previaHtml(html, titulo) {
     var doc = '<!doctype html><html><head><meta charset="utf-8"><style>body{font:16px/1.5 system-ui,sans-serif;margin:12px;color:#1b1b2f;background:#fff}button{font:inherit;padding:4px 12px}input{font:inherit;padding:4px}li{margin:2px 0}.oculto{display:none}</style></head><body>' + (html || '') + '</body></html>';
     return '<div class="previa"><div class="previa-barra"><i></i><i></i><i></i><span>' + esc(titulo || 'Página') + '</span></div><iframe sandbox="" title="' + esc(titulo || 'Prévia da página') + '" srcdoc="' + esc(doc) + '"></iframe></div>';
+  }
+  // Mostra a página que o aluno escreveu (HTML + CSS de verdade, sem scripts)
+  function previaDoc(codigo, titulo) {
+    var base = '<meta charset="utf-8"><style>body{font:16px/1.5 system-ui,sans-serif;margin:12px;color:#1b1b2f;background:#fff}</style>';
+    var doc = String(codigo || '');
+    if (/<head[^>]*>/i.test(doc)) doc = doc.replace(/<head[^>]*>/i, function (h) { return h + base; });
+    else doc = '<!doctype html><html><head>' + base + '</head><body>' + doc + '</body></html>';
+    return '<div class="previa previa-alta"><div class="previa-barra"><i></i><i></i><i></i><span>' + esc(titulo || 'Sua página') + '</span></div><iframe sandbox="" title="' + esc(titulo || 'Prévia da página') + '" srcdoc="' + esc(doc) + '"></iframe></div>';
+  }
+  // Pega o "cenário" do exercício: página, banco, pasta ou API (o do exercício,
+  // ou o padrão da fase, ou o padrão da trilha)
+  function contexto(p, s) {
+    var info = p.info || (s && s.cfg.info) || null;
+    var fase = info ? info.fase : {}, curso = info ? info.curso : {};
+    var o = p.card || p.ex || {};
+    var pegar = function () { for (var i = 0; i < arguments.length; i++) if (arguments[i] !== undefined) return arguments[i]; };
+    return { dom: o.dom, banco: pegar(o.banco, fase.banco, curso.banco), pasta: pegar(o.pasta, fase.pasta), api: pegar(o.api, fase.api) };
+  }
+  // Mostra o cenário: a página (DOM), as tabelas (SQL) ou a pasta (terminal)
+  function blocoContexto(ling, ctx) {
+    var h = '';
+    if (ctx.dom !== undefined) h += blocoPagina(ctx.dom);
+    if (ling === 'sql' && ctx.banco) h += '<details class="pagina-html bloco-banco" open><summary>🗄️ As tabelas do banco</summary><div class="banco-tabelas" data-banco="' + esc(ctx.banco) + '"><p class="vazio">Carregando as tabelas...</p></div></details>';
+    if (ling === 'terminal' && ctx.pasta) h += '<details class="pagina-html"><summary>📁 Antes de você, alguém já rodou estes comandos</summary>' + codigoHtml(ctx.pasta, 'terminal') + '</details>';
+    return h;
+  }
+  function tabelaHtml(t) {
+    return '<div class="tabela-rolar"><table class="tabela-sql">' + (t.nome ? '<caption>' + esc(t.nome) + '</caption>' : '') +
+      '<thead><tr>' + t.colunas.map(function (c, i) { return '<th>' + esc(c) + (t.tipos && t.tipos[i] ? '<small>' + esc(t.tipos[i]) + '</small>' : '') + '</th>'; }).join('') + '</tr></thead>' +
+      '<tbody>' + (t.linhas.length ? t.linhas.map(function (l) { return '<tr>' + l.map(function (v) { return '<td' + (v === 'NULL' ? ' class="nulo"' : '') + '>' + esc(v) + '</td>'; }).join('') + '</tr>'; }).join('') : '<tr><td colspan="' + t.colunas.length + '" class="nulo">(vazia)</td></tr>') + '</tbody></table></div>';
+  }
+  // Preenche os quadros de tabelas (o banco roda num Web Worker, então chega depois)
+  function hidratarBancos(raiz) {
+    raiz.querySelectorAll('.banco-tabelas[data-banco]').forEach(function (el) {
+      var banco = el.getAttribute('data-banco');
+      el.removeAttribute('data-banco');
+      window.cqExecutor.descreverBanco(banco).then(function (tabs) {
+        el.innerHTML = tabs.length ? tabs.map(tabelaHtml).join('') : '<p class="vazio">(banco vazio)</p>';
+      });
+    });
+  }
+  // Saída de SQL ("a | b") vira tabela de verdade na tela
+  function saidaSqlHtml(texto) {
+    return texto.split(/\n\n/).map(function (bloco) {
+      var linhas = bloco.split('\n');
+      if (linhas.length < 1 || !linhas[0]) return '';
+      var cols = linhas[0].split(' | ');
+      var corpo = linhas.slice(1);
+      if (corpo.length === 1 && corpo[0] === '(nenhuma linha)') corpo = [];
+      return tabelaHtml({ colunas: cols, linhas: corpo.map(function (l) { return l.split(' | '); }) });
+    }).join('');
   }
   function blocoPagina(dom) {
     if (dom === undefined) return '';
@@ -235,20 +289,12 @@
       '<p>' + (u.xpHoje >= meta ? 'Meta de hoje batida! ' + u.xpHoje + ' XP. Quer ir além?' : 'Meta de hoje: <b>' + u.xpHoje + '/' + meta + ' XP</b>. ' + (u.estudouHoje ? 'Continue assim!' : 'Faça uma fase para manter a ofensiva 🔥')) + '</p></div>' +
       '</section>' +
       (rev ? '<a class="cartao-revisao" href="#/revisao"><span class="ico-grande">🧠</span><span><b>Revisão do dia</b><br>' + rev + ' pergunta' + (rev > 1 ? 's' : '') + ' esperando. Revisar no dia certo é o que faz você não esquecer.</span><span class="seta" aria-hidden="true">›</span></a>' : '') +
-      '<h2 class="titulo-secao">Suas trilhas</h2>' +
-      '<div class="cursos">' + ORDEM.map(function (cid) {
-        var c = CURSOS[cid], p = progressoCurso(cid);
-        var pct = Math.round(p.feitas / p.total * 100);
-        return '<article class="cartao-curso" style="--cor:' + c.cor + '">' +
-          '<div class="cc-topo"><span class="cc-icone">' + c.icone + '</span><div><h3>' + esc(c.nome) + '</h3><p>' + esc(c.desc) + '</p></div></div>' +
-          '<div class="barra" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100" aria-label="Progresso em ' + esc(c.nome) + '"><i style="width:' + pct + '%"></i></div>' +
-          '<p class="cc-status">' + p.feitas + ' de ' + p.total + ' fases' + (p.proxima ? ' · próxima: <b>' + esc(p.proxima.titulo) + '</b>' : ' · trilha completa 🎓') + '</p>' +
-          '<div class="cc-acoes">' +
-          (p.proxima ? '<a class="btn" href="#/fase/' + p.proxima.id + '">' + (p.feitas ? 'Continuar' : 'Começar') + '</a>' : '') +
-          '<a class="btn btn-sec" href="#/trilha/' + cid + '">Ver trilha</a>' +
-          '<a class="btn btn-sec" href="#/lab/' + cid + '" title="Laboratório: escreva e rode código livre">🧪 Lab</a>' +
-          '</div></article>';
-      }).join('') + '</div>' +
+      '<h2 class="titulo-secao">Linguagens de programação</h2>' +
+      '<div class="cursos">' + LINGUAGENS.map(cartaoCurso).join('') + '</div>' +
+      (FULLSTACK.length > 1 ? '<h2 class="titulo-secao">🚀 Carreira Full Stack</h2>' +
+        '<p class="secao-sub">O caminho para criar sites e sistemas completos: a tela (front-end), o servidor (back-end), o banco de dados e a publicação. Siga na ordem:</p>' +
+        mapaFullStack() +
+        '<div class="cursos">' + FULLSTACK.filter(function (c) { return LINGUAGENS.indexOf(c) < 0; }).map(cartaoCurso).join('') + '</div>' : '') +
       '<div class="anuncio-slot"></div>' +
       '<section class="dica-estudo"><h2 class="titulo-secao">Como estudar aqui</h2><ol>' +
       '<li><b>Leia o cartão e rode o exemplo.</b> Antes de rodar, tente prever o que vai aparecer.</li>' +
@@ -257,6 +303,29 @@
       '<li><b>Digite o código.</b> Nos desafios, escrever com as próprias mãos é o que fixa.</li>' +
       '</ol></section>';
     tela(html, 'inicio');
+  }
+
+  function cartaoCurso(cid) {
+    var c = CURSOS[cid], p = progressoCurso(cid);
+    var pct = Math.round(p.feitas / p.total * 100);
+    return '<article class="cartao-curso" style="--cor:' + c.cor + '">' +
+      '<div class="cc-topo"><span class="cc-icone">' + c.icone + '</span><div><h3>' + esc(c.nome) + '</h3><p>' + esc(c.desc) + '</p></div></div>' +
+      '<div class="barra" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100" aria-label="Progresso em ' + esc(c.nome) + '"><i style="width:' + pct + '%"></i></div>' +
+      '<p class="cc-status">' + p.feitas + ' de ' + p.total + ' fases' + (p.proxima ? ' · próxima: <b>' + esc(p.proxima.titulo) + '</b>' : ' · trilha completa 🎓') + '</p>' +
+      '<div class="cc-acoes">' +
+      (p.proxima ? '<a class="btn" href="#/fase/' + p.proxima.id + '">' + (p.feitas ? 'Continuar' : 'Começar') + '</a>' : '') +
+      '<a class="btn btn-sec" href="#/trilha/' + cid + '">Ver trilha</a>' +
+      '<a class="btn btn-sec" href="#/lab/' + cid + '" title="Laboratório: escreva e rode código livre">🧪 Lab</a>' +
+      '</div></article>';
+  }
+  // A trilha Full Stack em passos: mostra onde a pessoa está
+  function mapaFullStack() {
+    return '<ol class="mapa-fs">' + FULLSTACK.map(function (cid, i) {
+      var c = CURSOS[cid], p = progressoCurso(cid);
+      var pct = Math.round(p.feitas / p.total * 100);
+      var est = pct === 100 ? 'feita' : pct > 0 ? 'atual' : '';
+      return '<li class="' + est + '" style="--cor:' + c.cor + '"><a href="#/trilha/' + cid + '"><span class="mfs-num">' + (pct === 100 ? '✓' : i + 1) + '</span><span class="mfs-ico">' + c.icone + '</span><b>' + esc(c.nome) + '</b><small>' + (pct ? pct + '%' : p.total + ' fases') + '</small></a></li>';
+    }).join('') + '</ol>';
   }
 
   // =============================================================
@@ -441,7 +510,7 @@
     s.corpo.innerHTML = '<article class="licao">' +
       '<span class="selo">Lição</span><h1>' + esc(c.titulo) + '</h1>' +
       '<div class="texto">' + c.texto + '</div>' +
-      blocoPagina(c.dom) +
+      blocoContexto(s.cfg.ling, contexto(p, s)) +
       (c.codigo ? '<div class="exemplo">' + codigoHtml(c.codigo, s.cfg.ling) +
         (c.entrada ? '<p class="entrada-info">Entrada (o que seria digitado): <code>' + esc(c.entrada).replace(/\n/g, ' ⏎ ') + '</code></p>' : '') +
         '<p class="prever-dica">🤔 Antes de rodar: o que você acha que vai aparecer?</p>' +
@@ -450,16 +519,23 @@
     var b = s.corpo.querySelector('.btn-rodar');
     if (b) b.onclick = async function () {
       b.disabled = true; b.textContent = 'Rodando...';
-      var r = await window.cqExecutor.executar(s.cfg.ling, c.codigo, c.entrada || '', { dom: c.dom });
-      mostrarSaida(s.corpo.querySelector('.saida'), r);
+      var m = window.cqMontarCodigo(s.cfg.ling, c.codigo, c.teste);
+      var r = await window.cqExecutor.executar(s.cfg.ling, m.codigo, c.entrada || '', Object.assign({ teste: m.teste }, contexto(p, s)));
+      mostrarSaida(s.corpo.querySelector('.saida'), r, s.cfg.ling);
       b.disabled = false; b.textContent = '▶ Rodar de novo';
     };
+    hidratarBancos(s.corpo);
     botao(s, 'Continuar', function () { proximo(s); });
   }
 
-  function mostrarSaida(el, r, esperado) {
+  function mostrarSaida(el, r, ling) {
     el.hidden = false;
-    var html = '<div class="saida-rotulo">Saída</div><pre>' + (r.saida ? esc(r.saida) : '<span class="vazio">(nada foi mostrado)</span>') + '</pre>';
+    var html;
+    if (r.tela !== undefined) html = '<div class="saida-rotulo">Terminal</div><pre class="terminal">' + (r.tela ? esc(r.tela) : '<span class="vazio">(nenhum comando)</span>') + '</pre>';
+    else if (r.pagina !== undefined && !r.saida && !r.erro) html = '';
+    else if (ling === 'sql' && r.saida && !r.erro) html = '<div class="saida-rotulo">Resultado</div>' + saidaSqlHtml(r.saida);
+    else html = '<div class="saida-rotulo">Saída</div><pre>' + (r.saida ? esc(r.saida) : '<span class="vazio">(nada foi mostrado)</span>') + '</pre>';
+    if (r.pagina !== undefined) html = '<div class="saida-rotulo">Sua página</div>' + previaDoc(r.pagina) + (html ? html.replace('>Saída<', '>Resultado do teste<') : '');
     if (r.erro) {
       var ex = window.cqExplicarErro(r.erro);
       html += '<div class="erro-caixa"><b>⚠️ ' + esc(ex.titulo) + '</b><p>' + esc(ex.dica) + '</p><details><summary>Mensagem original</summary><pre>' + esc(r.erro) + '</pre></details></div>';
@@ -476,12 +552,14 @@
     s.corpo.innerHTML = '<article class="exercicio">' +
       '<span class="selo">' + (ex.tipo === 'prever' ? 'Preveja a saída' : 'Pergunta') + '</span>' +
       '<h1>' + (ex.tipo === 'prever' ? (ex.p || 'O que aparece na tela?') : ex.p) + '</h1>' +
-      blocoPagina(ex.dom) +
+      blocoContexto(s.cfg.ling || p.ling, contexto(p, s)) +
       (ex.codigo ? codigoHtml(ex.codigo, s.cfg.ling || p.ling) : '') +
+      (ex.codigo && (s.cfg.ling || p.ling) === 'html' && ex.previa ? previaDoc(ex.codigo, 'Como fica') : '') +
       (ex.entrada ? '<p class="entrada-info">Entrada digitada: <code>' + esc(ex.entrada).replace(/\n/g, ' ⏎ ') + '</code></p>' : '') +
       '<div class="opcoes" role="radiogroup">' + ordem.map(function (i) {
         return '<button class="opcao" role="radio" aria-checked="false" data-i="' + i + '">' + (ex.tipo === 'prever' ? '<pre>' + esc(ex.op[i]) + '</pre>' : esc(ex.op[i])) + '</button>';
       }).join('') + '</div></article>';
+    hidratarBancos(s.corpo);
     var botoes = s.corpo.querySelectorAll('.opcao');
     botoes.forEach(function (b) {
       b.onclick = function () {
@@ -515,10 +593,11 @@
         html += '<input class="lacuna" data-i="' + i + '" style="--tam:' + Math.max(tam, 2) + 'ch" autocapitalize="off" autocomplete="off" spellcheck="false" aria-label="Lacuna ' + (i + 1) + '">';
       }
     });
-    s.corpo.innerHTML = '<article class="exercicio"><span class="selo">Complete o código</span><h1>' + ex.p + '</h1>' + blocoPagina(ex.dom) +
+    s.corpo.innerHTML = '<article class="exercicio"><span class="selo">Complete o código</span><h1>' + ex.p + '</h1>' + blocoContexto(ling, contexto(p, s)) +
       '<pre class="codigo codigo-lacunas"><code>' + html + '</code></pre>' +
       (ex.op ? '<div class="fichas" aria-label="Sugestões">' + embaralhar(ex.op).map(function (o) { return '<button class="ficha" type="button">' + esc(o) + '</button>'; }).join('') + '</div>' : '') +
       '</article>';
+    hidratarBancos(s.corpo);
     var inputs = Array.prototype.slice.call(s.corpo.querySelectorAll('.lacuna'));
     var foco = inputs[0];
     inputs.forEach(function (inp) { inp.addEventListener('focus', function () { foco = inp; }); });
@@ -557,10 +636,11 @@
     var banco = embaralhar(todas), resposta = [];
     if (banco.map(function (b) { return b.t; }).join('\n') === ex.linhas.join('\n')) banco.reverse();
     s.corpo.innerHTML = '<article class="exercicio"><span class="selo">Monte o código</span><h1>' + ex.p + '</h1>' +
-      blocoPagina(ex.dom) +
+      blocoContexto(ling, contexto(p, s)) +
       '<p class="instrucao">Toque nas linhas na ordem certa. ' + (ex.extras && ex.extras.length ? 'Cuidado: tem linha sobrando que não serve!' : '') + ' Toque numa linha da resposta para devolvê-la.</p>' +
       '<div class="montar-resposta" aria-label="Sua resposta"></div>' +
       '<div class="montar-banco" aria-label="Linhas disponíveis"></div></article>';
+    hidratarBancos(s.corpo);
     var elR = s.corpo.querySelector('.montar-resposta'), elB = s.corpo.querySelector('.montar-banco');
     function desenhar() {
       elR.innerHTML = resposta.length ? resposta.map(function (b, i) { return '<button class="linha" data-i="' + i + '"><code>' + window.cqRealcar(b.t, ling) + '</code></button>'; }).join('') : '<p class="vazio">Sua resposta aparece aqui</p>';
@@ -586,11 +666,12 @@
     s.corpo.innerHTML = '<article class="exercicio desafio">' +
       '<span class="selo">Desafio de código</span><div class="enunciado">' + ex.p + '</div>' +
       (testes[0].entrada ? '<p class="entrada-info">Entrada (o que será "digitado"): <code>' + esc(testes[0].entrada).replace(/\n/g, ' ⏎ ') + '</code>' + (testes.length > 1 ? ' — e mais ' + (testes.length - 1) + ' teste(s) com outras entradas' : '') + '</p>' : '') +
-      blocoPagina(ex.dom) +
-      (ex.teste ? '<details class="teste-info"><summary>Código de teste que vamos rodar junto com o seu</summary>' + codigoHtml(ex.teste, ling) + '</details>' : '') +
+      blocoContexto(ling, contexto(p, s)) +
+      (ex.teste ? '<details class="teste-info"><summary>' + (ling === 'html' ? 'Teste que vamos rodar na sua página (JavaScript)' : ling === 'terminal' ? 'Comandos de teste que vamos rodar depois dos seus' : 'Código de teste que vamos rodar junto com o seu') + '</summary>' + codigoHtml(ex.teste, ling === 'html' ? 'javascript' : ling) + '</details>' : '') +
       '<div class="editor-box"></div>' +
       '<div class="desafio-botoes"><button class="btn btn-sec b-rodar">▶ Executar</button><button class="btn btn-sec b-dica">💡 Dica</button><button class="btn btn-sec b-sol" hidden>👀 Ver solução</button><button class="btn btn-sec b-reset" title="Voltar ao código inicial">↺</button></div>' +
       '<div class="dicas"></div><div class="saida" hidden></div></article>';
+    hidratarBancos(s.corpo);
     var editor = window.cqCriarEditor(s.corpo.querySelector('.editor-box'), {
       ling: ling, valor: ls(chaveRasc) || ex.inicio || '',
       aoMudar: function (v) { ls(chaveRasc, v); },
@@ -621,13 +702,13 @@
     s.corpo.querySelector('.b-reset').onclick = function () { if (confirm('Voltar ao código inicial?')) editor.definir(ex.inicio || ''); };
     async function rodar(codigo, entrada) {
       var m = window.cqMontarCodigo(ling, codigo, ex.teste);
-      return window.cqExecutor.executar(ling, m.codigo, entrada || '', { deslocamento: m.deslocamento, dom: ex.dom });
+      return window.cqExecutor.executar(ling, m.codigo, entrada || '', Object.assign({ deslocamento: m.deslocamento, teste: m.teste }, contexto(p, s)));
     }
     var bRodar = s.corpo.querySelector('.b-rodar');
     bRodar.onclick = async function () {
       bRodar.disabled = true; bRodar.textContent = 'Rodando...';
       var r = await rodar(editor.valor(), testes[0].entrada);
-      mostrarSaida(elSaida, r);
+      mostrarSaida(elSaida, r, ling);
       bRodar.disabled = false; bRodar.textContent = '▶ Executar';
     };
     botao(s, 'Verificar', async function () {
@@ -656,14 +737,16 @@
       E.sons.erro();
       var r2 = falhou.r;
       if (r2.erro) {
-        mostrarSaida(elSaida, r2);
+        mostrarSaida(elSaida, r2, ling);
       } else {
         elSaida.hidden = false;
         elSaida.innerHTML = '<div class="comparar">' +
           '<div><div class="saida-rotulo">Esperado</div><pre>' + diffHtml(falhou.t.saida, r2.saida, true) + '</pre></div>' +
           '<div><div class="saida-rotulo">Seu programa mostrou</div><pre>' + (r2.saida ? diffHtml(r2.saida, falhou.t.saida, false) : '<span class="vazio">(nada)</span>') + '</pre></div></div>' +
           (testes.length > 1 ? '<p class="entrada-info">Teste ' + (falhou.n + 1) + ' com entrada: <code>' + esc(falhou.t.entrada || '').replace(/\n/g, ' ⏎ ') + '</code></p>' : '') +
-          '<p class="dica-diff">As linhas destacadas são diferentes. Confira letras, espaços, acentos e pontuação.</p>';
+          '<p class="dica-diff">As linhas destacadas são diferentes. Confira letras, espaços, acentos e pontuação.</p>' +
+          (r2.pagina !== undefined ? '<div class="saida-rotulo">Sua página</div>' + previaDoc(r2.pagina) : '') +
+          (r2.tela !== undefined ? '<details><summary>Ver o terminal</summary><pre class="terminal">' + esc(r2.tela) + '</pre></details>' : '');
       }
       botao(s, 'Verificar', s.botao.onclick);
       atualizarBotoesAjuda();
@@ -731,7 +814,7 @@
     }
     // mistura linguagens e fases (estudar intercalado ajuda a fixar)
     var escolhidos = embaralhar(itens).slice(0, 10);
-    var passos = escolhidos.map(function (it) { return { tipo: 'ex', ex: it.ex, chave: it.id, ling: it.ling, idx: 0 }; });
+    var passos = escolhidos.map(function (it) { return { tipo: 'ex', ex: it.ex, chave: it.id, ling: it.ling, idx: 0, info: it.info }; });
     var cfg = {
       modo: 'revisao', info: null, ling: null, passos: passos, sair: '#/',
       aoTerminar: async function (s) {
@@ -843,21 +926,44 @@
   // =============================================================
   function telaLab(cid) {
     var c = CURSOS[cid], ling = c.ling;
-    var exemplo = { python: 'nome = input("Seu nome: ")\nfor i in range(3):\n    print(f"{i + 1}. Olá, {nome}!")\n', javascript: 'const nome = prompt("Seu nome: ");\nfor (let i = 1; i <= 3; i++) {\n  console.log(`${i}. Olá, ${nome}!`);\n}\n', java: 'Scanner sc = new Scanner(System.in);\nString nome = sc.nextLine();\nfor (int i = 1; i <= 3; i++) {\n    System.out.println(i + ". Olá, " + nome + "!");\n}\n' }[ling];
+    var EXEMPLOS = {
+      python: 'nome = input("Seu nome: ")\nfor i in range(3):\n    print(f"{i + 1}. Olá, {nome}!")\n',
+      javascript: 'const nome = prompt("Seu nome: ");\nfor (let i = 1; i <= 3; i++) {\n  console.log(`${i}. Olá, ${nome}!`);\n}\n',
+      java: 'Scanner sc = new Scanner(System.in);\nString nome = sc.nextLine();\nfor (int i = 1; i <= 3; i++) {\n    System.out.println(i + ". Olá, " + nome + "!");\n}\n',
+      html: '<!DOCTYPE html>\n<html lang="pt-BR">\n<head>\n  <style>\n    body { font-family: sans-serif; }\n    h1 { color: #E91E63; }\n    .card { padding: 16px; border: 1px solid #ddd; border-radius: 12px; }\n  </style>\n</head>\n<body>\n  <h1>Meu salão</h1>\n  <div class="card">\n    <p>Corte: <b>R$ 40</b></p>\n  </div>\n</body>\n</html>\n',
+      sql: 'SELECT nome, preco\nFROM servicos\nORDER BY preco DESC;\n',
+      node: 'const express = require("express");\nconst app = express();\napp.use(express.json());\n\napp.get("/ola", (req, res) => {\n  res.json({ mensagem: "Olá do servidor!" });\n});\n\napp.listen(3000, () => console.log("Servidor na porta 3000"));\n\n// testando como se fosse o navegador:\nconst r = await fetch("http://localhost:3000/ola");\nconsole.log(r.status, await r.json());\n',
+      react: 'function Contador() {\n  const [n, setN] = useState(0);\n  return (\n    <div>\n      <p>Cliques: {n}</p>\n      <button onClick={() => setN(n + 1)}>+1</button>\n    </div>\n  );\n}\n\nrenderizar(<Contador />);\nclicar("button");\nconsole.log(document.querySelector("p").textContent);\n',
+      terminal: 'mkdir meu-site\ncd meu-site\necho "<h1>Oi</h1>" > index.html\ngit init\ngit add .\ngit commit -m "Primeira versão"\ngit log --oneline\n'
+    };
+    var exemplo = EXEMPLOS[ling] || '';
+    var temEntrada = ling === 'python' || ling === 'javascript' || ling === 'java';
+    var ctxLab = { banco: c.banco };
+    var dicaLab = {
+      html: 'Escreva uma página inteira (HTML e CSS) e toque em Executar para ver como fica.',
+      sql: 'As tabelas de exemplo estão abaixo. Cada vez que você executa, o banco volta ao original.',
+      node: 'Aqui o servidor roda no seu navegador. Use fetch("http://localhost:3000/...") para testar as rotas.',
+      react: 'Use renderizar(<Componente />) para desenhar na tela, e clicar("seletor") / digitar("seletor", "texto") para interagir.',
+      terminal: 'Um terminal de treino: pastas, arquivos, Git e npm de mentirinha. Cada execução começa do zero, numa pasta vazia.'
+    }[ling];
     tela('<section class="lab" style="--cor:' + c.cor + '"><div class="trilha-cab"><a href="#/trilha/' + cid + '" class="voltar" aria-label="Voltar">‹</a><span class="cc-icone">' + c.icone + '</span><div><h1>Laboratório de ' + esc(c.nome) + '</h1><p>Teste qualquer ideia. Seu código fica salvo neste aparelho.</p></div></div>' +
+      (dicaLab ? '<p class="nota">' + esc(dicaLab) + '</p>' : '') +
+      blocoContexto(ling, ctxLab) +
       '<div class="editor-box"></div>' +
-      '<label class="lab-entrada">Entrada (uma resposta por linha, para ' + (ling === 'python' ? 'input()' : ling === 'javascript' ? 'prompt()' : 'Scanner') + ')<textarea rows="2" spellcheck="false">Michael</textarea></label>' +
+      (temEntrada ? '<label class="lab-entrada">Entrada (uma resposta por linha, para ' + (ling === 'python' ? 'input()' : ling === 'javascript' ? 'prompt()' : 'Scanner') + ')<textarea rows="2" spellcheck="false">Michael</textarea></label>' : '') +
       '<div class="desafio-botoes"><button class="btn b-rodar">▶ Executar</button><button class="btn btn-sec b-limpar">Limpar</button></div>' +
       (ling === 'java' ? '<p class="nota">No Java, se você não escrever uma classe com main, a plataforma coloca seu código dentro de um main automaticamente.</p>' : '') +
       '<div class="saida" hidden></div></section>', 'lab-tela');
+    hidratarBancos($app);
     if (ling === 'python') window.cqExecutor.prepararPython();
     var chave = 'cq_lab_' + cid;
     var ed = window.cqCriarEditor($app.querySelector('.editor-box'), { ling: ling, valor: ls(chave) || exemplo, aoMudar: function (v) { ls(chave, v); }, aoAtalho: function () { b.click(); } });
     var b = $app.querySelector('.b-rodar'), saida = $app.querySelector('.saida');
     b.onclick = async function () {
       b.disabled = true; b.textContent = ling === 'python' && !window.cqExecutor.pythonPronto() ? 'Carregando Python...' : 'Rodando...';
-      var r = await window.cqExecutor.executar(ling, ed.valor(), $app.querySelector('.lab-entrada textarea').value);
-      mostrarSaida(saida, r);
+      var campoEntrada = $app.querySelector('.lab-entrada textarea');
+      var r = await window.cqExecutor.executar(ling, ed.valor(), campoEntrada ? campoEntrada.value : '', ctxLab);
+      mostrarSaida(saida, r, ling);
       b.disabled = false; b.textContent = '▶ Executar';
     };
     $app.querySelector('.b-limpar').onclick = function () { if (confirm('Apagar o código do laboratório?')) ed.definir(''); };

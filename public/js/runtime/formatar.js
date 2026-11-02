@@ -16,6 +16,7 @@
       if (/^class\s/.test(Function.prototype.toString.call(v))) return '[class ' + (v.name || '(anonymous)') + ']';
       return '[Function: ' + (v.name || '(anonymous)') + ']';
     }
+    if (typeof Symbol !== 'undefined' && typeof v[Symbol.for('nodejs.util.inspect.custom')] === 'function') return String(v[Symbol.for('nodejs.util.inspect.custom')]());
     if (vistos.indexOf(v) >= 0) return '[Circular]';
     vistos = vistos.concat([v]);
     if (Array.isArray(v)) {

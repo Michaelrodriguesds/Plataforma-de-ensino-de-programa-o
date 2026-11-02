@@ -84,12 +84,20 @@ const CONQUISTAS = [
   { id: 'xp-6000', icone: '💫', nome: '6.000 XP', desc: 'Junte 6.000 pontos de experiência.' },
   { id: 'perfeito-10', icone: '💎', nome: 'Caprichoso', desc: 'Termine 10 fases com 3 estrelas.' },
   { id: 'revisor-50', icone: '🧠', nome: 'Memória de elefante', desc: 'Acerte 50 perguntas na revisão.' },
-  { id: 'poliglota', icone: '🗺️', nome: 'Poliglota', desc: 'Conclua uma fase em cada linguagem.' },
+  { id: 'poliglota', icone: '🗺️', nome: 'Poliglota', desc: 'Conclua uma fase em Python, em JavaScript e em Java.' },
   { id: 'objetos', icone: '🧱', nome: 'Mestre dos objetos', desc: 'Conclua o mundo de Orientação a Objetos em qualquer linguagem.' },
   { id: 'formado-javascript', icone: '🟨', nome: 'Formado em JavaScript', desc: 'Conclua todas as fases de JavaScript.' },
   { id: 'formado-python', icone: '🐍', nome: 'Formado em Python', desc: 'Conclua todas as fases de Python.' },
-  { id: 'formado-java', icone: '☕', nome: 'Formado em Java', desc: 'Conclua todas as fases de Java.' }
+  { id: 'formado-java', icone: '☕', nome: 'Formado em Java', desc: 'Conclua todas as fases de Java.' },
+  { id: 'formado-htmlcss', icone: '🎨', nome: 'Formado em HTML e CSS', desc: 'Conclua todas as fases de HTML e CSS.' },
+  { id: 'formado-react', icone: '⚛️', nome: 'Formado em React', desc: 'Conclua todas as fases de React.' },
+  { id: 'formado-backend', icone: '🟩', nome: 'Formado em Back-end', desc: 'Conclua todas as fases de Back-end com Node.js.' },
+  { id: 'formado-sql', icone: '🗄️', nome: 'Formado em SQL', desc: 'Conclua todas as fases de SQL e Bancos de Dados.' },
+  { id: 'formado-git', icone: '🌿', nome: 'Formado em Git e Deploy', desc: 'Conclua todas as fases de Git, Terminal e Deploy.' },
+  { id: 'fullstack', icone: '🚀', nome: 'Desenvolvedor Full Stack', desc: 'Conclua as trilhas de HTML e CSS, JavaScript, React, Back-end, SQL e Git.' }
 ];
+const LINGUAGENS = ['python', 'javascript', 'java'];
+const FULLSTACK = ['htmlcss', 'javascript', 'react', 'backend', 'sql', 'git'];
 
 function verificarConquistas(u, fasesIdx) {
   const tem = new Set(u.conquistas);
@@ -113,8 +121,10 @@ function verificarConquistas(u, fasesIdx) {
     if (u.fases[f.id]) c.feitas++;
     if (f.poo) { c.poo[f.mundo] = c.poo[f.mundo] || { t: 0, f: 0 }; c.poo[f.mundo].t++; if (u.fases[f.id]) c.poo[f.mundo].f++; }
   }
-  const cursos = Object.keys(porCurso);
-  if (cursos.length && cursos.every(c => porCurso[c].feitas > 0)) ganhar('poliglota');
+  const linguagens = LINGUAGENS.filter(c => porCurso[c]);
+  if (linguagens.length && linguagens.every(c => porCurso[c].feitas > 0)) ganhar('poliglota');
+  const trilhasFs = FULLSTACK.filter(c => porCurso[c]);
+  if (trilhasFs.length === FULLSTACK.length && trilhasFs.every(c => porCurso[c].feitas === porCurso[c].total)) ganhar('fullstack');
   for (const [nome, c] of Object.entries(porCurso)) {
     if (Object.values(c.poo).some(m => m.t > 0 && m.f === m.t)) ganhar('objetos');
     if (c.total > 0 && c.feitas === c.total) ganhar('formado-' + nome);

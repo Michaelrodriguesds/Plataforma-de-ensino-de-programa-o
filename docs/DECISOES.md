@@ -59,3 +59,19 @@ O executor de Java bloqueia por padrão de texto: arquivos, rede, processos, ref
 
 ### D13 — Idioma e exemplos do dia a dia
 Tudo em português, sem jargão, com analogias físicas (caixa com etiqueta, forma de bolo, campainha) e exemplos do cotidiano (salão, entregas, estoque). Os chefões usam o caixa de um salão: um problema real e próximo.
+
+### D14 — Carreira Full Stack sem sair do navegador
+Pedido do dono: curso completo para desenvolvedor full stack. Para manter o princípio do D3 (todo código executado de verdade) sem gastar servidor, cada trilha nova roda no aparelho do aluno:
+- **HTML e CSS:** o navegador desenha a página (iframe com `sandbox`, sem scripts) e o linkedom monta a mesma página no Web Worker para o teste. O `csshelp.js` calcula a cascata (especificidade, herança, `var()`, `@media` por largura simulada, `:hover` simulado).
+- **SQL:** SQLite de verdade (sql.js). É um banco real, então tudo que se aprende vale para MySQL/PostgreSQL com pequenas diferenças.
+- **Back-end:** um Node simulado (`nodesim.js`) com as APIs que um iniciante usa. Rodar Node de verdade no servidor seria caro e inseguro.
+- **React:** Preact com `preact/compat` (API do React em 4% do tamanho) + sucrase para o JSX. O aluno escreve React normal; os imports são ignorados.
+- **Git:** um terminal simulado com as mensagens reais do Git, em inglês, como o aluno vai ver no próprio computador.
+
+### D15 — Arquivos do sql.js e do React dentro do projeto
+O sql.js (`public/js/runtime/sql/`) e o `reactlib.js` ficam no repositório, gerados a partir do npm. Assim o servidor de produção não precisa das ferramentas de desenvolvimento (`npm ci --omit=dev`) e não dependemos de CDN (diferente do Pyodide, que é grande demais).
+
+### D16 — Testes das trilhas novas
+- HTML: o teste é JavaScript e usa ferramentas com nomes em português (`texto`, `existe`, `estilo`...), para o aluno conseguir ler o teste.
+- Terminal: só a saída dos comandos de teste é comparada (a marca `#__TESTE__` separa), porque cada aluno pode chegar ao mesmo resultado com comandos diferentes. O campo `pasta` monta o cenário antes.
+- Node e React: o teste usa `fetch` (back-end) e `clicar`/`digitar` (React), como uma pessoa usando o sistema.

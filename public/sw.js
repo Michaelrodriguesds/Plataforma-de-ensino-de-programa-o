@@ -1,13 +1,20 @@
 // Service Worker: guarda os arquivos do site no aparelho para abrir
 // mais rápido (e até sem internet nas telas que já foram abertas).
 // Ao mudar arquivos do site, aumente a VERSAO para forçar atualização.
-const VERSAO = 'cq-v3';
+const VERSAO = 'cq-v4';
 const ARQUIVOS = [
   '/app', '/css/estilo.css', '/manifest.webmanifest', '/icones/icone.svg',
   '/js/app.js', '/js/realce.js', '/js/consentimento.js', '/js/anuncios.js', '/js/rastreio.js', '/js/publico.js', '/js/editor.js', '/js/erros.js', '/js/executor.js', '/js/efeitos.js',
   '/js/runtime/montar.js', '/js/runtime/formatar.js', '/js/runtime/jsexec.js', '/js/runtime/pypre.js',
   '/js/runtime/worker-js.js', '/js/runtime/worker-py.js', '/js/runtime/worker-dom.js', '/js/runtime/linkedom.js',
-  '/js/conteudo/javascript.js', '/js/conteudo/python.js', '/js/conteudo/java.js'
+  '/js/runtime/worker-html.js', '/js/runtime/csshelp.js',
+  '/js/runtime/worker-sql.js', '/js/runtime/sqlexec.js', '/js/runtime/sql/sql-wasm.js', '/js/runtime/sql/sql-wasm.wasm',
+  '/js/runtime/worker-node.js', '/js/runtime/nodesim.js',
+  '/js/runtime/worker-react.js', '/js/runtime/reactprep.js', '/js/runtime/reactlib.js',
+  '/js/runtime/worker-terminal.js', '/js/runtime/terminal.js',
+  '/js/conteudo/javascript.js', '/js/conteudo/python.js', '/js/conteudo/java.js',
+  '/js/conteudo/htmlcss-1.js', '/js/conteudo/htmlcss-2.js', '/js/conteudo/react.js',
+  '/js/conteudo/backend-1.js', '/js/conteudo/backend-2.js', '/js/conteudo/sql.js', '/js/conteudo/git.js'
 ];
 
 self.addEventListener('install', e => {

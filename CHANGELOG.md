@@ -10,6 +10,34 @@ Formato: **MAIOR.MENOR.CORREÇÃO**
 
 ---
 
+## [1.3.0] — 2026-11-02 — Carreira Full Stack
+
+### 5 trilhas novas: de 103 para 197 fases (de 409 para 709 exercícios)
+| Trilha | Fases | Ids | Como roda |
+|---|---|---|---|
+| 🎨 HTML e CSS | 22 | `hc-01` a `hc-22` | a página do aluno vira prévia de verdade (iframe sem scripts) e um teste em JS confere a página com `texto()`, `existe()`, `quantos()`, `atributo()` e `estilo()` |
+| ⚛️ React | 16 | `re-01` a `re-16` | Preact + preact/compat (mesma forma de escrever do React) e JSX traduzido pelo sucrase, num Web Worker |
+| 🟩 Back-end com Node.js | 20 | `be-01` a `be-20` | um "Node de treino" com Express, http, MongoDB (na memória), bcryptjs, jsonwebtoken (HMAC-SHA256 de verdade), cors, dotenv, crypto, path e fs |
+| 🗄️ SQL e Bancos de Dados | 20 | `sql-01` a `sql-20` | SQLite de verdade (sql.js/WebAssembly, arquivos em `public/js/runtime/sql/`) |
+| 🌿 Git, Terminal e Deploy | 16 | `git-01` a `git-16` | um terminal de treino com pastas, Git (branches, merge, conflitos), "GitHub" (`gh repo create`, push, pull, clone), npm e node |
+
+- **Mapa da Carreira Full Stack** na tela inicial e no site público: HTML e CSS → JavaScript → React → Back-end → SQL → Git.
+- **Conquistas novas:** uma por trilha (`formado-htmlcss`, `formado-react`, `formado-backend`, `formado-sql`, `formado-git`) e **Desenvolvedor Full Stack** (`fullstack`). "Poliglota" agora vale só para Python, JavaScript e Java.
+- **Laboratório** para todas as trilhas (com exemplos prontos para cada uma).
+- **Campos novos nas fases** (ver `docs/ARQUITETURA.md`): `banco` (SQL), `pasta` (terminal), `api` (React), `teste` também em completar/montar/prever e na lição.
+- Tabelas do banco mostradas ao aluno em cada exercício de SQL, e o resultado de SELECT aparece como tabela.
+- Realce de código para SQL, terminal e CSS dentro do HTML; barras de símbolos para cada trilha.
+- Mensagens de erro traduzidas para SQL, back-end e React.
+- O servidor coloca automaticamente um `<script>` para cada arquivo de `public/js/conteudo` no app (criar trilha = criar arquivo).
+- Validador: roda as 5 trilhas novas, confere se o código inicial não passa sozinho e exige explicação nas perguntas.
+- Novos scripts: `npm run build:react` (gera `reactlib.js`) e `npm run copiar:sql` (copia o sql.js).
+- `.gitattributes` (fim de linha LF) para acabar com os avisos "LF will be replaced by CRLF" no Windows.
+
+### Correções
+- `body-parser` atualizado (alerta de segurança de negação de serviço) — versão do `package-lock.json`.
+
+---
+
 ## [1.2.1] — 2026-10-21 — Mapa visual do projeto
 
 - **`docs/mapa-codequest.html`**: guia visual (abra no navegador) com:

@@ -287,7 +287,10 @@ app.get('/termos', (req, res) => html(res, paginas.termos(req)));
 
 // ---------- Aplicativo (/app) ----------
 // Entregamos o index.html com as configurações de anúncio já embutidas
-const indexApp = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+// e com um <script> para cada arquivo de conteúdo (todas as trilhas, em ordem alfabética)
+const arquivosConteudo = fs.readdirSync(path.join(__dirname, 'public', 'js', 'conteudo')).filter(f => f.endsWith('.js')).sort();
+const indexApp = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8')
+  .replace('<!--CONTEUDO-->', arquivosConteudo.map(f => `<script src="/js/conteudo/${f}"></script>`).join('\n  '));
 app.get(['/app', '/app/'], (req, res) => {
   res.setHeader('Cache-Control', 'no-cache');
   res.type('html').send(indexApp.replace('</head>', config.scriptConfig(false) + '\n</head>'));

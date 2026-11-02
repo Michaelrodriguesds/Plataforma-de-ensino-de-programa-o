@@ -5,6 +5,37 @@
 // =============================================================
 (function () {
   var REGRAS = [
+    // ---------- SQL (SQLite) ----------
+    [/no such table: (\w+)/i, 'Tabela não existe: $1', 'Não existe tabela chamada "$1". Confira o nome nas tabelas do exercício (o SQL não perdoa letra trocada) ou se você criou a tabela com CREATE TABLE antes.'],
+    [/no such column: ([\w.]+)/i, 'Coluna não existe: $1', 'A coluna "$1" não existe. Confira o nome nas tabelas. Se era um texto, ele precisa de aspas simples: \'Ana\'.'],
+    [/ambiguous column name: (\w+)/i, 'Coluna ambígua: $1', 'Duas tabelas do JOIN têm a coluna "$1". Diga de qual tabela ela é: tabela.$1 (ou apelido.$1).'],
+    [/near "(.+?)": syntax error/i, 'Erro de escrita perto de "$1"', 'O SQL não entendeu o comando perto de "$1". Confira a ordem (SELECT ... FROM ... WHERE ... GROUP BY ... ORDER BY ...), vírgulas entre colunas e aspas simples nos textos.'],
+    [/incomplete input/i, 'Comando incompleto', 'O comando terminou no meio. Faltou fechar um parêntese ou aspas?'],
+    [/UNIQUE constraint failed: ([\w.]+)/i, 'Valor repetido em $1', 'A coluna $1 não aceita valores repetidos (UNIQUE ou PRIMARY KEY) e já existe uma linha com esse valor.'],
+    [/NOT NULL constraint failed: ([\w.]+)/i, '$1 não pode ficar vazio', 'A coluna $1 é NOT NULL: todo INSERT precisa informar um valor para ela.'],
+    [/FOREIGN KEY constraint failed/i, 'Chave estrangeira inválida', 'Você apontou para um registro que não existe na outra tabela (ou tentou apagar um registro que ainda é usado). Confira o id.'],
+    [/CHECK constraint failed/i, 'Regra CHECK desrespeitada', 'O valor não obedece à regra CHECK da tabela (ex: preço maior que zero).'],
+    [/table (\w+) already exists/i, 'Tabela $1 já existe', 'Essa tabela já foi criada. Use outro nome ou CREATE TABLE IF NOT EXISTS.'],
+    [/(\d+) values for (\d+) columns|table \w+ has (\d+) columns but (\d+) values were supplied/i, 'Quantidade de valores errada', 'O número de valores no VALUES precisa ser igual ao número de colunas listadas.'],
+    [/misuse of aggregate/i, 'Função de grupo no lugar errado', 'COUNT, SUM, AVG... não podem ir no WHERE. Para filtrar grupos use HAVING depois do GROUP BY.'],
+    [/Erro de SQL/i, 'Erro no SQL', 'Leia a mensagem: ela diz o que o banco não entendeu. Compare com o exemplo da lição.'],
+    // ---------- Back-end (Node simulado) ----------
+    [/nenhum servidor está ouvindo na porta (\d+)/i, 'Servidor desligado', 'Ninguém está ouvindo na porta $1. Você chamou app.listen($1)? Confira também se a porta do fetch é a mesma do listen.'],
+    [/Cannot find module '\.\//i, 'Arquivo separado', 'Aqui no CodeQuest todo o código fica num arquivo só. Em vez de require("./arquivo"), escreva tudo junto.'],
+    [/Cannot find module '([^']+)'/i, 'Módulo não encontrado: $1', 'O módulo "$1" não está instalado. Confira o nome (express, jsonwebtoken, bcryptjs, mongodb, cors, dotenv).'],
+    [/ERR_HTTP_HEADERS_SENT|Cannot set headers after they are sent/i, 'Respondeu duas vezes', 'Cada pedido só pode ter UMA resposta. Depois de res.json(...) ou res.send(...), use return para sair da função.'],
+    [/requires a callback function but got a (\w+)/i, 'Rota sem função', 'Uma rota recebeu $1 no lugar da função (req, res) => { ... }. Confira se o nome da função está certo e se ela foi criada antes.'],
+    [/a resposta não é JSON/i, 'Resposta não é JSON', 'O servidor respondeu com texto, não JSON. Use res.json(...) no servidor, ou r.text() no fetch.'],
+    [/invalid signature|jwt malformed|jwt expired/i, 'Token inválido', 'O token JWT não confere: foi assinado com outro segredo, está incompleto ou venceu.'],
+    [/secretOrPrivateKey must have a value/i, 'Faltou o segredo', 'jwt.sign precisa de um segredo: jwt.sign(dados, SEGREDO). Confira se a variável do segredo tem valor.'],
+    [/MongoClient must be connected/i, 'Banco não conectado', 'Chame await cliente.connect() antes de usar cliente.db(...).'],
+    [/A atualização precisa usar operadores/i, 'Use $set', 'No MongoDB, para mudar campos use { $set: { campo: valor } } (ou $inc, $push...).'],
+    // ---------- React ----------
+    [/Adjacent JSX elements must be wrapped|JSX expressions must have one parent/i, 'Um elemento só por fora', 'Um componente devolve UM elemento. Embrulhe tudo numa <div> ou num fragmento <>...</>.'],
+    [/Unterminated JSX|Expected corresponding JSX closing tag/i, 'Etiqueta JSX sem fechar', 'Toda etiqueta aberta precisa fechar: <p>...</p>. Etiquetas vazias fecham com barra: <img />, <input />, <br />.'],
+    [/Objects are not valid as a React child/i, 'Objeto na tela', 'Você colocou um objeto inteiro dentro do JSX. Mostre um campo dele: {cliente.nome}.'],
+    [/Too many re-renders|Maximum update depth/i, 'Laço de atualização', 'Algum setEstado está rodando a cada desenho. Em eventos use uma função: onClick={() => setN(n + 1)}, e não onClick={setN(n + 1)}.'],
+    [/Não encontrei nenhum elemento com o seletor/i, 'Elemento não encontrado', 'O teste procurou um elemento que não está na tela. Confira as etiquetas, ids e classes pedidos no enunciado.'],
     // ---------- Python ----------
     [/IndentationError|unexpected indent|expected an indented block|unindent does not match/i, 'Recuo errado', 'Confira os espaços no começo das linhas. Tudo que fica "dentro" de um if, for, while, def ou class precisa estar recuado (4 espaços), e as linhas do mesmo bloco precisam ter o mesmo recuo.'],
     [/SyntaxError: expected ':'/i, 'Faltou os dois pontos', 'Linhas com if, elif, else, for, while, def e class terminam com dois pontos ( : ).'],

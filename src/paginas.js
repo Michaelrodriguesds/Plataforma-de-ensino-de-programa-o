@@ -17,7 +17,8 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&a
 const tirarTags = s => String(s || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
 
 function criarPaginas({ cursos, config }) {
-  const ORDEM = ['python', 'javascript', 'java'].filter(id => cursos[id]);
+  const ORDEM = ['python', 'javascript', 'java', 'htmlcss', 'react', 'backend', 'sql', 'git'].filter(id => cursos[id]);
+  const FULLSTACK = ['htmlcss', 'javascript', 'react', 'backend', 'sql', 'git'].filter(id => cursos[id]);
   const listaFases = id => cursos[id].mundos.flatMap(m => m.fases);
   const totalFases = ORDEM.reduce((t, id) => t + listaFases(id).length, 0);
   const totalEx = ORDEM.reduce((t, id) => t + listaFases(id).reduce((s, f) => s + (f.ex || []).length, 0), 0);
@@ -88,16 +89,22 @@ ${corpo}
     const corpo = `
 <section class="pub-capa">
   <h1>Aprenda a programar de graça, jogando.</h1>
-  <p class="pub-sub">Python, JavaScript e Java em português, do primeiro <code>print</code> até Orientação a Objetos. Lições curtas, exercícios de verdade e uma fase por dia no celular ou no computador.</p>
+  <p class="pub-sub">Python, JavaScript e Java do primeiro <code>print</code> até Orientação a Objetos, e a <b>carreira Full Stack</b> completa: HTML, CSS, React, Node.js, SQL, Git e deploy. Em português, com lições curtas, exercícios de verdade e uma fase por dia no celular ou no computador.</p>
   <div class="pub-cta">
     <a class="btn btn-grande" href="/app#/cadastro">Começar grátis</a>
     <a class="btn btn-sec btn-grande" href="/aprender">Ver as aulas</a>
   </div>
   <p class="pub-continuar" hidden><a href="/app#/">Você já tem conta neste aparelho: continuar de onde parou ›</a></p>
   <ul class="pub-numeros">
-    <li><b>${ORDEM.length}</b> linguagens</li><li><b>${totalFases}</b> fases</li><li><b>${totalEx}</b> exercícios</li><li><b>R$ 0</b> para sempre</li>
+    <li><b>${ORDEM.length}</b> trilhas</li><li><b>${totalFases}</b> fases</li><li><b>${totalEx}</b> exercícios</li><li><b>R$ 0</b> para sempre</li>
   </ul>
 </section>
+
+${FULLSTACK.length > 1 ? `<section class="pub-secao">
+  <h2>🚀 Carreira Full Stack</h2>
+  <p class="pub-sub">O caminho completo para criar sites e sistemas: a tela, o servidor, o banco de dados e a publicação. Siga nesta ordem:</p>
+  <ol class="pub-fs">${FULLSTACK.map(id => `<li style="--cor:${cursos[id].cor}"><a href="/aprender/${id}">${cursos[id].icone} ${esc(cursos[id].nome)}</a><small>${listaFases(id).length} aulas</small></li>`).join('')}</ol>
+</section>` : ''}
 
 <section class="pub-secao">
   <h2>Escolha sua trilha</h2>
@@ -129,13 +136,13 @@ ${anuncio()}
   <h2>Perguntas frequentes</h2>
   <details><summary>É grátis mesmo?</summary><p>Sim. Todas as fases, exercícios e o ranking são gratuitos. O site se mantém com anúncios exibidos fora dos exercícios.</p></details>
   <details><summary>Tem certificado?</summary><p>Não. O foco é aprender e praticar. O que você leva é o conhecimento e o hábito de programar todo dia.</p></details>
-  <details><summary>Preciso instalar alguma coisa?</summary><p>Não. Tudo roda no navegador, inclusive o Python. No celular você pode tocar em "Adicionar à tela inicial" para usar como aplicativo.</p></details>
+  <details><summary>Preciso instalar alguma coisa?</summary><p>Não. Tudo roda no navegador: o Python, o banco de dados SQL, o servidor Node, o React e até um terminal com Git de treino. No celular você pode tocar em "Adicionar à tela inicial" para usar como aplicativo.</p></details>
   <details><summary>Nunca programei. Consigo?</summary><p>Consegue. A primeira fase começa do zero absoluto: mostrar uma mensagem na tela.</p></details>
   <details><summary>Por que criar conta?</summary><p>Para salvar seu progresso, suas estrelas e sua ofensiva, receber a revisão do dia e aparecer no ranking. As aulas para leitura são abertas para todos.</p></details>
 </section>`;
     return layout(req, {
       caminho: '/', corpo,
-      descricao: `Aprenda Python, JavaScript e Java de graça, em português, com ${totalFases} fases gamificadas, exercícios de código e revisão diária.`,
+      descricao: `Aprenda programação de graça, em português: Python, JavaScript, Java e a carreira Full Stack (HTML, CSS, React, Node.js, SQL e Git), com ${totalFases} fases gamificadas e exercícios de código.`,
       jsonLd: { '@context': 'https://schema.org', '@type': 'WebSite', name: 'CodeQuest', inLanguage: 'pt-BR', url: config.siteUrl(req) + '/' }
     });
   }
@@ -153,7 +160,7 @@ ${ORDEM.map(id => {
   ${c.mundos.map(m => `<h3>${esc(m.titulo)}</h3><ol class="pub-lista-fases" start="${n + 1}">${m.fases.map(f => { n++; return `<li><a href="/aprender/${id}/${f.id}">${esc(f.titulo)}</a></li>`; }).join('')}</ol>`).join('')}
   </section>`;
 }).join(anuncio())}`;
-    return layout(req, { caminho: '/aprender', titulo: 'Aulas de Python, JavaScript e Java', descricao: `Lista completa de ${totalFases} aulas gratuitas de programação em português: Python, JavaScript e Java, do básico à Orientação a Objetos.`, corpo });
+    return layout(req, { caminho: '/aprender', titulo: 'Aulas de programação grátis', descricao: `Lista completa de ${totalFases} aulas gratuitas de programação em português: Python, JavaScript, Java, HTML e CSS, React, Node.js, SQL e Git, do básico à Orientação a Objetos.`, corpo });
   }
 
   // ---------- Uma trilha ----------
@@ -174,7 +181,7 @@ ${c.mundos.map((m, mi) => `
 </section>${mi === 1 ? anuncio() : ''}`).join('')}`;
     return layout(req, {
       caminho: '/aprender/' + id, titulo: `Curso de ${c.nome} grátis em português`, corpo,
-      descricao: `Curso gratuito de ${c.nome} em português: ${listaFases(id).length} aulas com exemplos e exercícios, do zero à Orientação a Objetos.`,
+      descricao: `Curso gratuito de ${c.nome} em português: ${listaFases(id).length} aulas com exemplos e exercícios práticos, do zero ao avançado.`,
       jsonLd: { '@context': 'https://schema.org', '@type': 'Course', name: `Curso de ${c.nome}`, description: c.desc, inLanguage: 'pt-BR', isAccessibleForFree: true, provider: { '@type': 'Organization', name: 'CodeQuest' } }
     });
   }
@@ -272,7 +279,7 @@ ${anuncio()}
 <li><b>Conta:</b> nome, nome de usuário, avatar e senha. A senha é guardada de forma criptografada (nem nós conseguimos ler).</li>
 <li><b>Progresso de estudo:</b> fases concluídas, estrelas, pontos (XP), ofensiva, respostas da revisão e data de cadastro.</li>
 <li><b>Estatísticas de uso:</b> quais páginas foram abertas e em que dia, ligadas a um código aleatório guardado no seu navegador. Esse código não contém seu nome, e-mail ou endereço IP; serve só para contar visitantes únicos.</li>
-<li><b>Código enviado:</b> os programas em Java que você executa são enviados ao servidor apenas para serem compilados e rodados, e apagados logo em seguida. Códigos de Python e JavaScript rodam no seu próprio aparelho.</li>
+<li><b>Código enviado:</b> os programas em Java que você executa são enviados ao servidor apenas para serem compilados e rodados, e apagados logo em seguida. Todo o resto (Python, JavaScript, HTML e CSS, SQL, React, o Node.js de treino e o terminal com Git) roda no seu próprio aparelho e não é enviado a ninguém.</li>
 </ul>
 <p>Não pedimos CPF, endereço, telefone ou dados de pagamento.</p>
 

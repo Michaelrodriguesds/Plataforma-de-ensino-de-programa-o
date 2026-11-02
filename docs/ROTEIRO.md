@@ -14,7 +14,9 @@ Ideias organizadas por prioridade. Ao começar uma, mova para "Em andamento". Ao
 
 ## Prioridade média (qualidade do ensino)
 
-- 🔴 **Mais trilhas:** HTML e CSS (encaixa com o modo DOM), SQL (dá para rodar no navegador com sql.js), Git.
+- 🔴 **Mais trilhas:** TypeScript, Python para dados (pandas no Pyodide), testes automatizados (Jest/Vitest), Docker. (HTML e CSS, SQL, React, Back-end e Git: feitos na 1.3.0.)
+- 🟡 **Projeto final full stack guiado:** juntar React + API + banco num app só, com deploy de verdade passo a passo.
+- 🟢 **Mostrar as tabelas e a prévia nas aulas públicas** (hoje o site público mostra só o código).
 - 🟡 **Projetos guiados maiores** no fim de cada trilha. Exemplos: agenda do salão completa, controle de entregas, jogo da forca.
 - 🟡 **Desafio do dia:** um exercício sorteado por dia, igual para todos, com ranking próprio.
 - 🟢 **Explicação do erro na revisão:** mostrar de novo o cartão da lição quando a pessoa erra uma pergunta da revisão.
