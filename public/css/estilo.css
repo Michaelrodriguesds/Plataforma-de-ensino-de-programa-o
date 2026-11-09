@@ -559,6 +559,22 @@ body:has(.jogo) .aviso-cookies { top: 12px; bottom: auto; }
    e, no PC, a tela inteira ficava esticada de ponta a ponta */
 .jogo, .tela { overflow-x: clip; }
 
+/* Celular deitado (pouca altura): barras mais baixas para sobrar espaço para o conteúdo */
+@media (max-height: 500px) and (orientation: landscape) and (max-width: 899px) {
+  :root { --topo-h: 48px; --nav-h: 46px; }
+  .nav-baixo a { flex-direction: row; gap: 6px; font-size: .82rem; }
+  .nav-baixo .ico { font-size: 1.15rem; }
+  .nav-baixo .bolinha { position: static; }
+}
+
+/* Monitores grandes (Full HD em diante): letras e telas um pouco maiores */
+@media (min-width: 1800px) {
+  html { font-size: 112.5%; }
+  .tela:not(.admin-tela) { max-width: 800px; }
+  .tela.inicio { max-width: 1280px; }
+  .jogo, .jogo-acoes, .feedback { max-width: 860px; }
+}
+
 /* PC e notebook: a tela inicial fica mais larga e os cartões das trilhas viram grade */
 @media (min-width: 1100px) {
   .tela.inicio { max-width: 1140px; padding-left: 24px; padding-right: 24px; }

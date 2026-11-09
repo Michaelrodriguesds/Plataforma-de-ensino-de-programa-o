@@ -14,6 +14,9 @@ Formato: **MAIOR.MENOR.CORREÇÃO**
 
 - **Corrigido:** no PC/notebook as telas do app ficavam esticadas de ponta a ponta. Uma regra de CSS da 1.3 (`max-width: 100vw`) apagava a largura máxima das telas. Agora o conteúdo fica centralizado como foi desenhado; no celular nada muda.
 - **Tela inicial em telas grandes (1100px ou mais):** mais larga, com os cartões das trilhas em grade de 3 colunas.
+- **Celular deitado:** barras de cima e de baixo mais baixas, sobrando mais espaço para a fase.
+- **Monitores grandes (1800px ou mais):** letras e telas um pouco maiores.
+- Testado em 10 tamanhos (Android 360×640, iPhone SE, iPhone 14, celular deitado, tablet, iPad deitado, notebooks 1280 e 1366, monitores Full HD e 2K), 13 telas cada, sem rolagem lateral, sem botão fora da tela e sem erro de JavaScript.
 - Service worker `cq-v8`, para os aparelhos baixarem o CSS novo.
 
 ---
