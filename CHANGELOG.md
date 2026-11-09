@@ -10,6 +10,14 @@ Formato: **MAIOR.MENOR.CORREÇÃO**
 
 ---
 
+## [1.4.2] — 2026-11-09 — Layout no PC e notebook
+
+- **Corrigido:** no PC/notebook as telas do app ficavam esticadas de ponta a ponta. Uma regra de CSS da 1.3 (`max-width: 100vw`) apagava a largura máxima das telas. Agora o conteúdo fica centralizado como foi desenhado; no celular nada muda.
+- **Tela inicial em telas grandes (1100px ou mais):** mais larga, com os cartões das trilhas em grade de 3 colunas.
+- Service worker `cq-v8`, para os aparelhos baixarem o CSS novo.
+
+---
+
 ## [1.4.1] — 2026-11-02 — Revisão geral, testes automáticos e correções
 
 Tudo detalhado em `docs/REVISAO.md`.

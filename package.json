@@ -1,6 +1,6 @@
 {
   "name": "codequest",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "CodeQuest - plataforma gamificada para aprender programação em português: Python, JavaScript, Java e a carreira Full Stack (HTML, CSS, React, Node.js, SQL e Git)",
   "main": "server.js",
   "scripts": {
