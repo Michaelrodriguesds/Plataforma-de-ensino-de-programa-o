@@ -56,7 +56,18 @@ const config = {
     demo: ANUNCIOS_DEMO && !semAnuncio, ga: GA_ID || null,
     contato: (process.env.CONTATO_EMAIL || '').trim() || null
   }),
-  scriptConfig: semAnuncio => `<script>window.CQ_CONFIG=${JSON.stringify(config.publico(semAnuncio)).replace(/</g, '\\u003c')};</script>`
+  scriptConfig: semAnuncio => `<script>window.CQ_CONFIG=${JSON.stringify(config.publico(semAnuncio)).replace(/</g, '\\u003c')};</script>` + config.tagAdsense(semAnuncio),
+  // Código do AdSense direto no <head> (o Google confere isso para aprovar o site).
+  // A metatag vai em todas as páginas; o script, só nas páginas que podem ter anúncio.
+  tagAdsense: semAnuncio => {
+    if (!/^ca-pub-\d{10,20}$/.test(ADSENSE_CLIENTE)) return '';
+    let html = `\n<meta name="google-adsense-account" content="${ADSENSE_CLIENTE}">`;
+    if (!semAnuncio) {
+      html += `\n<script>window.adsbygoogle=window.adsbygoogle||[];try{window.adsbygoogle.requestNonPersonalizedAds=localStorage.getItem('cq_consentimento')==='aceito'?0:1}catch(e){window.adsbygoogle.requestNonPersonalizedAds=1}</script>`
+        + `\n<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENTE}" crossorigin="anonymous"></script>`;
+    }
+    return html;
+  }
 };
 
 const store = criarStore();

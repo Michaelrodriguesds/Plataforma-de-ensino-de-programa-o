@@ -10,6 +10,16 @@ Formato: **MAIOR.MENOR.CORREÇÃO**
 
 ---
 
+## [1.4.3] — 2026-11-11 — Código do AdSense no <head>
+
+- O código do AdSense agora vem **direto no `<head>` de cada página**, do jeito que o Google pede na verificação ("Snippet de código do AdSense"). Antes ele era colocado por JavaScript depois que a página abria, e o verificador do Google podia não enxergar.
+- Também vai a metatag `google-adsense-account` em todas as páginas (outra forma de verificação aceita pelo Google).
+- Privacidade e Termos continuam sem anúncio (só a metatag).
+- Teste automático novo: sem `ADSENSE_CLIENTE`, nenhuma página tem código do AdSense.
+- Service worker `cq-v9`.
+
+---
+
 ## [1.4.2] — 2026-11-09 — Layout no PC e notebook
 
 - **Corrigido:** no PC/notebook as telas do app ficavam esticadas de ponta a ponta. Uma regra de CSS da 1.3 (`max-width: 100vw`) apagava a largura máxima das telas. Agora o conteúdo fica centralizado como foi desenhado; no celular nada muda.

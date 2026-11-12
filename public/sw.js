@@ -1,7 +1,7 @@
 // Service Worker: guarda os arquivos do site no aparelho para abrir
 // mais rápido (e até sem internet nas telas que já foram abertas).
 // Ao mudar arquivos do site, aumente a VERSAO para forçar atualização.
-const VERSAO = 'cq-v8';
+const VERSAO = 'cq-v9';
 // Os arquivos grandes (sql-wasm.wasm, reactlib.js, linkedom.js) NÃO entram aqui:
 // são guardados só quando a pessoa usa aquela trilha (economiza o plano de dados).
 const ARQUIVOS = [

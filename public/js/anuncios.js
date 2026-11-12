@@ -18,6 +18,8 @@
   function carregarScript(cliente) {
     if (scriptPedido) return;
     scriptPedido = true;
+    // O servidor já coloca o script do AdSense no <head>: não carregar duas vezes
+    if (document.querySelector('script[src*="pagead2.googlesyndication.com"]')) return;
     window.adsbygoogle = window.adsbygoogle || [];
     // Sem consentimento para personalização: anúncios não personalizados
     var c = window.cqConsentimento && window.cqConsentimento.estado();

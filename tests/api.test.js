@@ -198,6 +198,7 @@ test('site público, segurança e compressão', async () => {
   assert.ok((sm.texto.match(/<loc>/g) || []).length > 200);
   assert.ok((await pedir('GET', '/robots.txt')).texto.includes('Sitemap:'));
   assert.equal((await pedir('GET', '/ads.txt')).status, 404, 'sem ADSENSE_CLIENTE não há ads.txt');
+  assert.ok(!inicio.texto.includes('pagead2') && !inicio.texto.includes('google-adsense-account'), 'sem ADSENSE_CLIENTE não há código do AdSense');
   const wasm = await pedir('GET', '/js/runtime/sql/sql-wasm.wasm');
   assert.equal(wasm.cab['content-type'], 'application/wasm');
   assert.equal((await pedir('GET', '/api/nada')).status, 404);
